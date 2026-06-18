@@ -28,11 +28,13 @@ export type ColorPalette = {
   tertiaryLabel: string;
   /** Hairline separators. */
   separator: string;
-  /** Graphite accent (buttons, selected state). */
+  /** iOS-blue accent (buttons, selected state, key indicators). */
   accent: string;
+  /** ~10% accent tint (secondary buttons, tinted icon chips). */
+  accentSoft: string;
   /** Text/icon on top of the accent. */
   onAccent: string;
-  /** Tab bar background. */
+  /** Tab bar background (translucent — sits under a blur material). */
   tabBar: string;
   /** Semantic tones + ~15% tinted backgrounds. */
   success: string;
@@ -52,9 +54,10 @@ const light: ColorPalette = {
   secondaryLabel: 'rgba(60,60,67,0.6)',
   tertiaryLabel: 'rgba(60,60,67,0.3)',
   separator: 'rgba(60,60,67,0.29)',
-  accent: '#1C1C1E',
+  accent: '#007AFF',
+  accentSoft: 'rgba(0,122,255,0.12)',
   onAccent: '#FFFFFF',
-  tabBar: 'rgba(249,249,249,0.94)',
+  tabBar: 'rgba(249,249,249,0.7)',
   success: '#34C759',
   successFill: 'rgba(52,199,89,0.15)',
   warn: '#FF9500',
@@ -72,9 +75,10 @@ const dark: ColorPalette = {
   secondaryLabel: 'rgba(235,235,245,0.6)',
   tertiaryLabel: 'rgba(235,235,245,0.3)',
   separator: 'rgba(84,84,88,0.6)',
-  accent: '#FFFFFF',
-  onAccent: '#000000',
-  tabBar: 'rgba(22,22,22,0.94)',
+  accent: '#0A84FF',
+  accentSoft: 'rgba(10,132,255,0.22)',
+  onAccent: '#FFFFFF',
+  tabBar: 'rgba(18,18,18,0.7)',
   success: '#30D158',
   successFill: 'rgba(48,209,88,0.18)',
   warn: '#FF9F0A',
@@ -105,12 +109,13 @@ export const Spacing = {
   xxxl: 48,
 } as const;
 
-/** Corner radii — iOS continuous-ish. */
+/** Corner radii — generous, iOS-26 continuous-ish. */
 export const Radii = {
-  sm: 8,
-  md: 10,
-  lg: 14,
-  xl: 20,
+  sm: 10,
+  md: 12,
+  lg: 16,
+  xl: 22,
+  xxl: 28,
   pill: 999,
 } as const;
 
@@ -155,6 +160,8 @@ export const Typography = {
   caption: { ...fam, fontSize: 13, lineHeight: 18, fontWeight: '400', letterSpacing: -0.08 },
   /** Footnote, uppercase — iOS grouped-list section headers. */
   label: { ...fam, fontSize: 13, lineHeight: 18, fontWeight: '600', letterSpacing: 0.5, textTransform: 'uppercase' },
+  /** Big tabular-figure number for headline stats. */
+  stat: { ...fam, fontSize: 36, lineHeight: 40, fontWeight: '700', letterSpacing: 0.3, fontVariant: ['tabular-nums'] },
 } satisfies Record<string, TextStyle>;
 
 export type TypographyVariant = keyof typeof Typography;
@@ -170,7 +177,17 @@ export const VariantTone: Record<TypographyVariant, 'label' | 'secondaryLabel'> 
   muted: 'secondaryLabel',
   caption: 'secondaryLabel',
   label: 'secondaryLabel',
+  stat: 'label',
 };
+
+/** Soft, slightly cool drop shadow for raised cards (iOS-26 depth). */
+export const SoftShadow = {
+  shadowColor: '#1B2440',
+  shadowOffset: { width: 0, height: 6 },
+  shadowOpacity: 0.08,
+  shadowRadius: 16,
+  elevation: 3,
+} as const;
 
 /**
  * Legacy navigation/theme colour map (kept for the Expo-template helpers

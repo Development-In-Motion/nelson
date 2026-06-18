@@ -4,7 +4,7 @@ import { StyleSheet, View } from "react-native";
 import { HomeMonthCalendar } from "@/components/home-month-calendar";
 import { ScreenShell } from "@/components/screen-shell";
 import { StatusTag } from "@/components/status-tag";
-import { Body, Caption, Heading, Label, Title } from "@/components/ui/text";
+import { AppText, Body, Caption, Heading, Label, Muted, Title } from "@/components/ui/text";
 import { Card } from "@/components/ui/card";
 import { Divider } from "@/components/ui/divider";
 import { Avatar } from "@/components/ui/avatar";
@@ -185,7 +185,7 @@ export default function HomeScreen() {
 
       <Card style={styles.section}>
         <View style={styles.profileRow}>
-          <Avatar initials={elderProfile.initials} size={52} />
+          <Avatar initials={elderProfile.initials} size={48} tone="neutral" />
           <View style={styles.profileText}>
             <Title>{elderProfile.name}</Title>
             <Caption>
@@ -201,9 +201,12 @@ export default function HomeScreen() {
 
       <Label style={styles.sectionHeader}>{OVERVIEW_LABEL}</Label>
       <Card style={styles.section}>
-        <View style={styles.row}>
-          <Body>{TOTAL_AI_TIME_LABEL}</Body>
-          <Body style={styles.rowValue}>{totalCallMinutes} мин</Body>
+        <View>
+          <Label style={styles.statLabel}>{TOTAL_AI_TIME_LABEL}</Label>
+          <View style={styles.statValueRow}>
+            <AppText variant="stat">{totalCallMinutes}</AppText>
+            <Muted style={styles.statUnit}>мин</Muted>
+          </View>
         </View>
         <Divider />
         <View style={styles.row}>
@@ -250,7 +253,7 @@ export default function HomeScreen() {
       <Card style={styles.section}>
         {upcomingReminder ? (
           <View style={styles.nextUpBlock}>
-            <StatusTag label={UPCOMING_REMINDER_LABEL} tone="calendar" />
+            <Label style={[styles.statLabel, { color: c.accent }]}>{UPCOMING_REMINDER_LABEL}</Label>
             <Title>{upcomingReminder.title}</Title>
             <Body style={{ color: c.secondaryLabel }}>{upcomingReminder.detail}</Body>
             <Caption>{upcomingReminder.description}</Caption>
@@ -293,6 +296,12 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     gap: Spacing.md,
   },
+  rowLeft: {
+    alignItems: "center",
+    flexDirection: "row",
+    flexShrink: 1,
+    gap: Spacing.md,
+  },
   rowValue: {
     fontWeight: "600",
   },
@@ -300,7 +309,29 @@ const styles = StyleSheet.create({
     flexShrink: 1,
     textAlign: "right",
   },
+  statHeader: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: Spacing.md,
+  },
+  statLabel: {
+    marginLeft: 0,
+  },
+  statValueRow: {
+    alignItems: "baseline",
+    flexDirection: "row",
+    gap: Spacing.sm,
+  },
+  statUnit: {
+    fontWeight: "600",
+  },
+  nextUpRow: {
+    alignItems: "flex-start",
+    flexDirection: "row",
+    gap: Spacing.md,
+  },
   nextUpBlock: {
+    flex: 1,
     gap: Spacing.sm,
   },
 });

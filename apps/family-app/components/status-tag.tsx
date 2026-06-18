@@ -17,6 +17,7 @@ export function StatusTag({ label, tone }: StatusTagProps) {
     approved: { bg: c.successFill, fg: c.success },
     declined: { bg: c.dangerFill, fg: c.danger },
     pending: { bg: c.warnFill, fg: c.warn },
+    calendar: { bg: c.accentSoft, fg: c.accent },
   };
 
   const colors = semantic[tone] ?? { bg: c.fill, fg: c.secondaryLabel };

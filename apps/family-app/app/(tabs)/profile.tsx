@@ -96,7 +96,7 @@ export default function ProfileScreen() {
       <Label style={styles.sectionHeader}>Профил на близкия</Label>
       <Card style={styles.section}>
         <View style={styles.profileHeader}>
-          <Avatar initials={elderProfile.initials} size={60} />
+          <Avatar initials={elderProfile.initials} size={56} tone="neutral" />
           <View style={styles.profileCopy}>
             <Title>{elderProfile.name}</Title>
             <Caption>{elderProfile.phone}</Caption>
@@ -113,12 +113,6 @@ export default function ProfileScreen() {
           <StatusTag
             label={memoryRecord?.subscription ? "Абониран" : "Не е абониран"}
             tone={memoryRecord?.subscription ? "approved" : "declined"}
-          />
-          <StatusTag
-            label={
-              memoryRecord ? `${memoryRecord.memories.length} бележки` : "Няма бележки"
-            }
-            tone="calendar"
           />
         </View>
 

@@ -28,3 +28,7 @@ pnpm-debug.log*
 
 # MCP Server specific
 # (Dist files already ignored above)
+
+# Installed agent skills (local tooling, not app code)
+.agents/
+skills-lock.json

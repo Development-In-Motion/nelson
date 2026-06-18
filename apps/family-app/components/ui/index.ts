@@ -6,3 +6,4 @@ export { Divider } from '@/components/ui/divider';
 export { Screen } from '@/components/ui/screen';
 export { Avatar } from '@/components/ui/avatar';
 export { AppLogo } from '@/components/ui/app-logo';
+export { IconChip } from '@/components/ui/icon-chip';

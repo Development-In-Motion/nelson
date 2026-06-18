@@ -1,18 +1,21 @@
 import { Tabs } from 'expo-router';
 import React from 'react';
-import { Platform } from 'react-native';
+import { Platform, StyleSheet } from 'react-native';
+import { BlurView } from 'expo-blur';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 
 import { SystemFontFamily, useColors } from '@/constants/theme';
+import { useColorScheme } from '@/hooks/use-color-scheme';
 
 export default function TabLayout() {
   const c = useColors();
+  const scheme = useColorScheme() ?? 'light';
 
   return (
     <Tabs
       screenOptions={{
         sceneStyle: { backgroundColor: c.bg },
-        tabBarActiveTintColor: c.label,
+        tabBarActiveTintColor: c.accent,
         tabBarInactiveTintColor: '#8E8E93',
         headerShown: false,
         tabBarLabelStyle: {
@@ -20,11 +23,19 @@ export default function TabLayout() {
           fontSize: 11,
           fontWeight: '500',
         },
+        tabBarBackground: () => (
+          <BlurView
+            intensity={Platform.OS === 'android' ? 0 : 60}
+            tint={scheme === 'dark' ? 'systemThickMaterialDark' : 'systemThickMaterialLight'}
+            style={StyleSheet.absoluteFill}
+          />
+        ),
         tabBarStyle: {
           backgroundColor: c.tabBar,
           borderTopColor: c.separator,
-          borderTopWidth: 0.5,
+          borderTopWidth: StyleSheet.hairlineWidth,
           elevation: 0,
+          position: 'absolute',
           height: Platform.OS === 'ios' ? 88 : 64,
           paddingBottom: Platform.OS === 'ios' ? 28 : 8,
           paddingTop: 8,
@@ -43,8 +54,8 @@ export default function TabLayout() {
         name="memory"
         options={{
           title: 'Памет',
-          tabBarIcon: ({ color, size, focused }) => (
-            <MaterialCommunityIcons name={focused ? 'brain' : 'brain'} size={size} color={color} />
+          tabBarIcon: ({ color, size }) => (
+            <MaterialCommunityIcons name="brain" size={size} color={color} />
           ),
         }}
       />

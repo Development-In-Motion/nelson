@@ -24,8 +24,8 @@ type ButtonProps = {
 };
 
 /**
- * iOS-style button. `primary` = filled graphite accent, `secondary` = neutral
- * tinted fill, `ghost` = plain accent text. Flat — no Material elevation/ripple.
+ * iOS-26 button. `primary` = filled accent (blue), `secondary` = soft accent
+ * tint, `ghost` = plain accent text. Flat, capsule-radius, no Material ripple.
  */
 export function Button({
   label,
@@ -40,21 +40,18 @@ export function Button({
   const c = useColors();
   const isDisabled = disabled || loading;
   const isPrimary = variant === 'primary';
+  const tone = destructive ? c.danger : c.accent;
 
   const containerColor =
     variant === 'primary'
-      ? destructive
-        ? c.danger
-        : c.accent
+      ? tone
       : variant === 'secondary'
-        ? c.fill
+        ? destructive
+          ? c.dangerFill
+          : c.accentSoft
         : 'transparent';
 
-  const textColor = isPrimary
-    ? c.onAccent
-    : destructive
-      ? c.danger
-      : c.accent;
+  const textColor = isPrimary ? c.onAccent : tone;
 
   return (
     <Pressable
@@ -90,7 +87,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.xl,
   },
   pressed: {
-    opacity: 0.6,
+    opacity: 0.55,
   },
   disabled: {
     opacity: 0.4,

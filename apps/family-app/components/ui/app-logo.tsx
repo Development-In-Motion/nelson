@@ -10,8 +10,8 @@ type AppLogoProps = {
   size?: number;
 };
 
-/** Rounded-square app icon (phone glyph) + optional "Nelson" wordmark. */
-export function AppLogo({ showWordmark = true, size = 72 }: AppLogoProps) {
+/** Minimal app mark: a hairline rounded square with an accent phone glyph. */
+export function AppLogo({ showWordmark = true, size = 68 }: AppLogoProps) {
   const c = useColors();
   return (
     <View style={styles.wrap}>
@@ -21,12 +21,13 @@ export function AppLogo({ showWordmark = true, size = 72 }: AppLogoProps) {
           {
             width: size,
             height: size,
-            borderRadius: size * 0.26,
-            backgroundColor: c.accent,
+            borderRadius: size * 0.28,
+            backgroundColor: c.card,
+            borderColor: c.separator,
           },
         ]}
       >
-        <Ionicons name="call" size={size * 0.46} color={c.onAccent} />
+        <Ionicons name="call" size={size * 0.42} color={c.accent} />
       </View>
       {showWordmark ? (
         <AppText style={[styles.wordmark, { color: c.label }]}>Nelson</AppText>
@@ -43,11 +44,12 @@ const styles = StyleSheet.create({
   icon: {
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: StyleSheet.hairlineWidth,
   },
   wordmark: {
     fontFamily: SystemFontFamily,
-    fontSize: 34,
+    fontSize: 32,
     fontWeight: '700',
-    letterSpacing: 0.37,
+    letterSpacing: 0.36,
   },
 });
