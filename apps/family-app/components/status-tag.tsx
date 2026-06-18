@@ -1,6 +1,7 @@
-import { StyleSheet } from 'react-native';
-import { Chip } from 'react-native-paper';
+import { StyleSheet, View } from 'react-native';
 
+import { AppText } from '@/components/ui/text';
+import { Palette, Radii } from '@/constants/theme';
 import type { ActivityCategory, ApprovalStatus } from '@/types/ui-models';
 
 type StatusTagProps = {
@@ -8,39 +9,43 @@ type StatusTagProps = {
   tone: ActivityCategory | ApprovalStatus;
 };
 
-const toneColors: Record<StatusTagProps['tone'], { backgroundColor: string; textColor: string }> = {
-  calendar: { backgroundColor: '#CDCFFC', textColor: '#23244D' },
-  call: { backgroundColor: '#D4F4E4', textColor: '#173D2C' },
-  search: { backgroundColor: '#F9E4D4', textColor: '#5C3520' },
-  purchase: { backgroundColor: '#CDCFFC', textColor: '#23244D' },
-  pending: { backgroundColor: '#F9E4D4', textColor: '#5C3520' },
-  approved: { backgroundColor: '#D4F4E4', textColor: '#173D2C' },
-  declined: { backgroundColor: '#F9D4D4', textColor: '#5A2222' },
+type ToneStyle = { backgroundColor: string; textColor: string; borderColor: string };
+
+// Monochrome by default; only approval states carry a desaturated semantic hue.
+const toneColors: Record<StatusTagProps['tone'], ToneStyle> = {
+  calendar: { backgroundColor: Palette.surfaceAlt, textColor: Palette.ink, borderColor: Palette.line },
+  call: { backgroundColor: Palette.surfaceAlt, textColor: Palette.ink, borderColor: Palette.line },
+  search: { backgroundColor: Palette.surfaceAlt, textColor: Palette.ink, borderColor: Palette.line },
+  purchase: { backgroundColor: Palette.surfaceAlt, textColor: Palette.ink, borderColor: Palette.line },
+  pending: { backgroundColor: Palette.warnBg, textColor: Palette.warn, borderColor: Palette.warnBg },
+  approved: { backgroundColor: Palette.successBg, textColor: Palette.success, borderColor: Palette.successBg },
+  declined: { backgroundColor: Palette.dangerBg, textColor: Palette.danger, borderColor: Palette.dangerBg },
 };
 
 export function StatusTag({ label, tone }: StatusTagProps) {
   const colors = toneColors[tone];
 
   return (
-    <Chip
-      compact
-      style={[styles.chip, { backgroundColor: colors.backgroundColor }]}
-      textStyle={[styles.text, { color: colors.textColor }]}>
-      {label}
-    </Chip>
+    <View
+      style={[styles.chip, { backgroundColor: colors.backgroundColor, borderColor: colors.borderColor }]}
+    >
+      <AppText variant="caption" style={[styles.text, { color: colors.textColor }]}>
+        {label}
+      </AppText>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   chip: {
     alignSelf: 'flex-start',
-    backgroundColor: '#2D2D2D',
-    borderRadius: 999,
-    height: 32,
+    borderRadius: Radii.pill,
+    borderWidth: 1,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
   },
   text: {
-    fontSize: 11,
-    fontWeight: '600',
+    fontWeight: '700',
     letterSpacing: 0.2,
   },
 });

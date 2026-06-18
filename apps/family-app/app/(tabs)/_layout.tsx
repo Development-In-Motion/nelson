@@ -1,30 +1,40 @@
 import { Tabs } from 'expo-router';
 import React from 'react';
+import { Platform } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+
+import { MonoFontFamily, Palette } from '@/constants/theme';
 
 export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
         sceneStyle: {
-          backgroundColor: '#121212',
+          backgroundColor: Palette.bg,
         },
-        tabBarActiveTintColor: '#8B8DF1',
-        tabBarInactiveTintColor: '#A1A1AA',
+        tabBarActiveTintColor: Palette.ink,
+        tabBarInactiveTintColor: Palette.inkFaint,
         headerShown: false,
+        tabBarLabelStyle: {
+          fontFamily: MonoFontFamily,
+          fontSize: 11,
+          fontWeight: '700',
+        },
         tabBarStyle: {
-          backgroundColor: '#121212',
-          borderTopColor: '#2D2D2D',
-          height: 72,
-          paddingBottom: 8,
-          paddingTop: 8,
+          backgroundColor: Palette.bg,
+          borderTopColor: Palette.line,
+          borderTopWidth: 1,
+          elevation: 0,
+          height: Platform.OS === 'ios' ? 88 : 72,
+          paddingBottom: Platform.OS === 'ios' ? 28 : 10,
+          paddingTop: 10,
         },
       }}>
       <Tabs.Screen
         name="home"
         options={{
           title: 'Начало',
-          tabBarIcon: ({ color, size }) => <Ionicons name="home" size={size} color={color} />,
+          tabBarIcon: ({ color, size }) => <Ionicons name="home-outline" size={size} color={color} />,
         }}
       />
       <Tabs.Screen
@@ -41,7 +51,7 @@ export default function TabLayout() {
         options={{
           title: 'Профил',
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="person-circle" size={size} color={color} />
+            <Ionicons name="person-circle-outline" size={size} color={color} />
           ),
         }}
       />

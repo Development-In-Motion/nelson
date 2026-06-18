@@ -1,24 +1,22 @@
 import { useCallback, useEffect, useState } from "react";
-import { Pressable, StyleSheet, View } from "react-native";
-import { Button, Card, Modal, Portal, Text } from "react-native-paper";
+import { Modal, Pressable, StyleSheet, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
 import { ScreenShell } from "@/components/screen-shell";
+import { Body, Caption, Heading, Label, Muted, Title } from "@/components/ui/text";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Palette, Radii, Spacing } from "@/constants/theme";
 import { useAuth } from "@/context/auth-context";
-import { getCurrentUserMemory, memoryApiBaseUrl } from "@/lib/memory-api";
+import { getCurrentUserMemory } from "@/lib/memory-api";
 import type { UserMemoryRecord } from "@/types/memory";
-
-const memoryAccentPalette = ["#CDCFFC", "#D4F4E4", "#F9E4D4", "#F6E7B2"];
 
 function splitMemoryNote(note: string) {
   const trimmed = note.trim();
   const separatorIndex = trimmed.indexOf(":");
 
   if (separatorIndex <= 0) {
-    return {
-      label: "Памет",
-      value: trimmed,
-    };
+    return { label: "Памет", value: trimmed };
   }
 
   return {
@@ -29,9 +27,7 @@ function splitMemoryNote(note: string) {
 
 export default function MemoryScreen() {
   const { user } = useAuth();
-  const [memoryRecord, setMemoryRecord] = useState<UserMemoryRecord | null>(
-    null,
-  );
+  const [memoryRecord, setMemoryRecord] = useState<UserMemoryRecord | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -44,9 +40,7 @@ export default function MemoryScreen() {
     ) => {
       if (!user?.phone) {
         setMemoryRecord(null);
-        setErrorMessage(
-          "Влезте с телефонен номер, за да заредите данните за паметта.",
-        );
+        setErrorMessage("Влезте с телефонен номер, за да заредите данните за паметта.");
         setIsLoading(false);
         return;
       }
@@ -104,353 +98,201 @@ export default function MemoryScreen() {
   const memoryNotes = memoryRecord?.memories ?? [];
 
   return (
-    <ScreenShell contentContainerStyle={styles.contentContainer} refreshing={isRefreshing} onRefresh={handleRefresh}>
-      <Text variant="headlineSmall" style={styles.title}>
-        {screenTitle}
-      </Text>
-      <Text variant="bodyMedium" style={styles.subtitle}>
-        Какво знае AI за вашия близък.
-      </Text>
+    <ScreenShell refreshing={isRefreshing} onRefresh={handleRefresh}>
+      <Heading>{screenTitle}</Heading>
+      <Muted style={styles.subtitle}>Какво знае AI за вашия близък.</Muted>
 
       <View style={styles.statusBlock}>
-        <Text variant="bodySmall" style={styles.statusLabel}>
-          Свързан телефон
-        </Text>
-        <Text variant="bodyMedium" style={styles.statusValue}>
-          {user?.phone ?? "Няма наличен"}
-        </Text>
+        <Label>Свързан телефон</Label>
+        <Body>{user?.phone ?? "Няма наличен"}</Body>
       </View>
 
       {isLoading ? (
-        <Card mode="outlined" style={styles.feedbackCard}>
-          <Card.Content>
-            <Text variant="titleMedium" style={styles.feedbackTitle}>
-              Зареждане на паметта
-            </Text>
-            <Text variant="bodyMedium" style={styles.feedbackBody}>
-              Извличане на бележките за памет от {memoryApiBaseUrl}.
-            </Text>
-          </Card.Content>
+        <Card style={styles.feedbackCard}>
+          <Title>Зареждане на паметта</Title>
+          <Caption>Извличане на бележките за памет.</Caption>
         </Card>
       ) : null}
 
       {!isLoading && errorMessage ? (
-        <Card mode="outlined" style={styles.feedbackCard}>
-          <Card.Content style={styles.feedbackContent}>
-            <View style={styles.feedbackText}>
-              <Text variant="titleMedium" style={styles.feedbackTitle}>
-                Паметта не можа да бъде заредена
-              </Text>
-              <Text variant="bodyMedium" style={styles.feedbackBody}>
-                {errorMessage}
-              </Text>
-            </View>
-            <Button
-              mode="contained"
-              buttonColor="#8B8DF1"
-              textColor="#18181B"
-              onPress={() => void loadMemory()}
-            >
-              Опитай отново
-            </Button>
-          </Card.Content>
+        <Card style={styles.feedbackCard}>
+          <Title>Паметта не можа да бъде заредена</Title>
+          <Caption>{errorMessage}</Caption>
+          <Button label="Опитай отново" variant="secondary" onPress={() => void loadMemory()} />
         </Card>
       ) : null}
 
       {!isLoading && !errorMessage && !memoryRecord ? (
-        <Card mode="outlined" style={styles.feedbackCard}>
-          <Card.Content>
-            <Text variant="titleMedium" style={styles.feedbackTitle}>
-              Все още няма открита памет
-            </Text>
-            <Text variant="bodyMedium" style={styles.feedbackBody}>
-              Все още не открихме запис за памет за този телефонен номер.
-            </Text>
-          </Card.Content>
+        <Card style={styles.feedbackCard}>
+          <Title>Все още няма открита памет</Title>
+          <Caption>Все още не открихме запис за памет за този телефонен номер.</Caption>
         </Card>
       ) : null}
 
-      <Card mode="outlined" style={styles.notesCard}>
-        <Card.Content style={styles.notesContent}>
-          <View style={styles.notesHeader}>
-            <View style={styles.notesHeaderCopy}>
-              <Text variant="titleMedium" style={styles.notesTitle}>
-                Бележки за памет
-              </Text>
-              <Text variant="bodyMedium" style={styles.notesSubtitle}>
-                Запазени детайли, които Нелсън е запомнил за потребителя.
-              </Text>
-            </View>
-            <View style={styles.notesBadge}>
-              <Ionicons name="albums-outline" size={16} color="#23244D" />
-              <Text variant="bodySmall" style={styles.notesBadgeText}>
-                {memoryNotes.length} бележки
-              </Text>
-            </View>
+      <Card style={styles.notesCard}>
+        <View style={styles.notesHeader}>
+          <View style={styles.notesHeaderCopy}>
+            <Title>Бележки за памет</Title>
+            <Caption>Запазени детайли, които Нелсън е запомнил за потребителя.</Caption>
           </View>
+          <View style={styles.notesBadge}>
+            <Ionicons name="albums-outline" size={15} color={Palette.ink} />
+            <Caption style={styles.notesBadgeText}>{memoryNotes.length}</Caption>
+          </View>
+        </View>
 
-          {memoryNotes.length > 0 ? (
-            <>
-              <View style={styles.summaryRow}>
-                <View style={styles.summaryCard}>
-                  <Text variant="bodySmall" style={styles.summaryLabel}>
-                    Общо
-                  </Text>
-                  <Text variant="headlineSmall" style={styles.summaryValue}>
-                    {memoryNotes.length}
-                  </Text>
-                </View>
-                <Pressable
-                  onPress={() => setSelectedMemory(memoryNotes[0] ?? null)}
-                  style={({ pressed }) => [
-                    styles.summaryCard,
-                    styles.summaryCardInteractive,
-                    pressed ? styles.summaryCardPressed : null,
-                  ]}
-                >
-                  <Text variant="bodySmall" style={styles.summaryLabel}>
-                    Последна
-                  </Text>
-                  <Text
-                    variant="bodyMedium"
-                    style={styles.summaryText}
-                    numberOfLines={2}
-                  >
-                    {memoryNotes[0]}
-                  </Text>
-                  <Text variant="bodySmall" style={styles.summaryHint}>
-                    Докоснете, за да прочетете цялата бележка
-                  </Text>
-                </Pressable>
-              </View>
-
-              <View style={styles.noteList}>
-                {memoryNotes.map((item, index) => {
-                  const note = splitMemoryNote(item);
-                  const accentColor =
-                    memoryAccentPalette[index % memoryAccentPalette.length];
-
-                  return (
-                    <View
-                      key={`${memoryRecord?._id ?? "memory"}-note-${index + 1}`}
-                      style={styles.noteCard}
-                    >
-                      <View style={styles.noteCardTop}>
-                        <View
-                          style={[
-                            styles.noteAccent,
-                            { backgroundColor: accentColor },
-                          ]}
-                        />
-                        <Text variant="bodySmall" style={styles.noteIndex}>
-                          Бележка {index + 1}
-                        </Text>
-                      </View>
-                      <Text variant="bodySmall" style={styles.noteLabel}>
-                        {note.label}
-                      </Text>
-                      <Text variant="bodyLarge" style={styles.noteValue}>
-                        {note.value}
-                      </Text>
-                    </View>
-                  );
-                })}
-              </View>
-            </>
-          ) : (
-            <View style={styles.emptyState}>
-              <View style={styles.emptyStateIcon}>
-                <Ionicons name="albums-outline" size={22} color="#4D4FA0" />
-              </View>
-              <Text variant="titleMedium" style={styles.feedbackTitle}>
-                Все още няма запазени бележки за памет
-              </Text>
-              <Text variant="bodyMedium" style={styles.feedbackBody}>
-                Запазените бележки ще се появят тук, след като асистентът научи
-                нещо смислено.
-              </Text>
+        {memoryNotes.length > 0 ? (
+          <>
+            <View style={styles.summaryRow}>
+              <Card inset style={styles.summaryCard}>
+                <Label>Общо</Label>
+                <Heading>{memoryNotes.length}</Heading>
+              </Card>
+              <Pressable
+                onPress={() => setSelectedMemory(memoryNotes[0] ?? null)}
+                style={({ pressed }) => [
+                  styles.summaryCard,
+                  styles.summaryCardInteractive,
+                  pressed ? styles.summaryCardPressed : null,
+                ]}
+              >
+                <Label>Последна</Label>
+                <Body numberOfLines={2}>{memoryNotes[0]}</Body>
+                <Caption style={styles.summaryHint}>Докоснете, за да прочетете цялата бележка</Caption>
+              </Pressable>
             </View>
-          )}
-        </Card.Content>
+
+            <View style={styles.noteList}>
+              {memoryNotes.map((item, index) => {
+                const note = splitMemoryNote(item);
+
+                return (
+                  <Card
+                    inset
+                    key={`${memoryRecord?._id ?? "memory"}-note-${index + 1}`}
+                    style={styles.noteCard}
+                  >
+                    <View style={styles.noteCardTop}>
+                      <View style={styles.noteAccent} />
+                      <Caption style={styles.noteIndex}>Бележка {index + 1}</Caption>
+                    </View>
+                    <Label>{note.label}</Label>
+                    <Body style={styles.noteValue}>{note.value}</Body>
+                  </Card>
+                );
+              })}
+            </View>
+          </>
+        ) : (
+          <Card inset style={styles.emptyState}>
+            <Ionicons name="albums-outline" size={22} color={Palette.inkMuted} />
+            <Title>Все още няма запазени бележки за памет</Title>
+            <Caption style={styles.emptyStateText}>
+              Запазените бележки ще се появят тук, след като асистентът научи нещо смислено.
+            </Caption>
+          </Card>
+        )}
       </Card>
 
-      <Portal>
-        <Modal
-          visible={selectedMemory !== null}
-          onDismiss={() => setSelectedMemory(null)}
-          contentContainerStyle={styles.memoryModal}
-        >
-          <View style={styles.memoryModalHeader}>
-            <View style={styles.memoryModalTitleRow}>
-              <View style={styles.memoryModalIcon}>
-                <Ionicons name="book-outline" size={20} color="#23244D" />
+      <Modal
+        visible={selectedMemory !== null}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setSelectedMemory(null)}
+      >
+        <Pressable style={styles.modalBackdrop} onPress={() => setSelectedMemory(null)}>
+          <Pressable style={styles.modalCard} onPress={() => {}}>
+            <View style={styles.modalHeader}>
+              <View style={styles.modalCopy}>
+                <Title>Пълна бележка</Title>
+                <Caption>Запазена памет</Caption>
               </View>
-              <View style={styles.memoryModalCopy}>
-                <Text variant="titleMedium" style={styles.memoryModalTitle}>
-                  Последна бележка
-                </Text>
-                <Text variant="bodySmall" style={styles.memoryModalSubtitle}>
-                  Пълна бележка
-                </Text>
-              </View>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Затвори"
+                onPress={() => setSelectedMemory(null)}
+                style={styles.modalClose}
+              >
+                <Ionicons name="close" size={20} color={Palette.ink} />
+              </Pressable>
             </View>
-            <Button
-              compact
-              mode="text"
-              textColor="#8B8DF1"
-              onPress={() => setSelectedMemory(null)}
-            >
-              Затвори
-            </Button>
-          </View>
-
-          <Text variant="bodyLarge" style={styles.memoryModalBody}>
-            {selectedMemory ?? ""}
-          </Text>
-        </Modal>
-      </Portal>
+            <Body>{selectedMemory ?? ""}</Body>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </ScreenShell>
   );
 }
 
 const styles = StyleSheet.create({
-  contentContainer: {
-    gap: 0,
-  },
-  title: {
-    color: "#FFFFFF",
-    fontWeight: "700",
-    letterSpacing: -0.3,
-  },
   subtitle: {
-    color: "#A1A1AA",
-    lineHeight: 21,
-    marginBottom: 24,
-    marginTop: 8,
+    marginBottom: Spacing.xl,
+    marginTop: Spacing.sm,
   },
   statusBlock: {
-    marginBottom: 18,
-  },
-  statusLabel: {
-    color: "#7C7C87",
-    letterSpacing: 0.3,
-    marginBottom: 4,
-    textTransform: "uppercase",
-  },
-  statusValue: {
-    color: "#E4E4E7",
+    gap: Spacing.xs,
+    marginBottom: Spacing.lg,
   },
   feedbackCard: {
-    backgroundColor: "#1E1E1E",
-    borderColor: "#303038",
-    borderRadius: 18,
-    marginBottom: 18,
-  },
-  feedbackContent: {
-    gap: 14,
-  },
-  feedbackText: {
-    gap: 6,
-  },
-  feedbackTitle: {
-    color: "#FFFFFF",
-    fontWeight: "700",
-  },
-  feedbackBody: {
-    color: "#A1A1AA",
-    lineHeight: 20,
+    marginBottom: Spacing.lg,
   },
   notesCard: {
-    backgroundColor: "#1E1E1E",
-    borderColor: "#303038",
-    borderRadius: 22,
-    marginBottom: 18,
-  },
-  notesContent: {
-    gap: 18,
+    marginBottom: Spacing.lg,
   },
   notesHeader: {
     alignItems: "flex-start",
     flexDirection: "row",
-    gap: 12,
+    gap: Spacing.md,
     justifyContent: "space-between",
   },
   notesHeaderCopy: {
     flex: 1,
-    gap: 6,
-  },
-  notesTitle: {
-    color: "#FFFFFF",
-    fontWeight: "700",
-  },
-  notesSubtitle: {
-    color: "#A1A1AA",
-    lineHeight: 20,
-    maxWidth: 260,
+    gap: Spacing.xs,
   },
   notesBadge: {
     alignItems: "center",
-    alignSelf: "flex-start",
-    backgroundColor: "#CDCFFC",
-    borderRadius: 999,
+    borderColor: Palette.line,
+    borderRadius: Radii.pill,
+    borderWidth: 1,
     flexDirection: "row",
-    gap: 6,
+    gap: Spacing.xs,
     paddingHorizontal: 10,
-    paddingVertical: 7,
+    paddingVertical: 6,
   },
   notesBadgeText: {
-    color: "#23244D",
+    color: Palette.ink,
     fontWeight: "700",
   },
   summaryRow: {
     flexDirection: "row",
-    gap: 12,
+    gap: Spacing.md,
   },
   summaryCard: {
-    backgroundColor: "#171717",
-    borderColor: "#2D2D2D",
-    borderRadius: 18,
-    borderWidth: 1,
     flex: 1,
-    gap: 8,
+    gap: Spacing.sm,
     minHeight: 96,
-    padding: 16,
   },
   summaryCardInteractive: {
+    backgroundColor: Palette.surfaceAlt,
+    borderColor: Palette.line,
+    borderRadius: Radii.lg,
+    borderWidth: 1,
     justifyContent: "space-between",
+    padding: Spacing.lg,
   },
   summaryCardPressed: {
-    opacity: 0.88,
-  },
-  summaryLabel: {
-    color: "#8A8A96",
-    fontWeight: "700",
-    letterSpacing: 0.2,
-    textTransform: "uppercase",
-  },
-  summaryValue: {
-    color: "#FFFFFF",
-    fontWeight: "700",
-  },
-  summaryText: {
-    color: "#E4E4E7",
-    lineHeight: 20,
+    opacity: 0.7,
   },
   summaryHint: {
-    color: "#8B8DF1",
-    fontWeight: "600",
-    marginTop: 4,
+    color: Palette.ink,
+    fontWeight: "700",
+    marginTop: Spacing.xs,
   },
   noteList: {
-    gap: 12,
+    gap: Spacing.md,
   },
   noteCard: {
-    backgroundColor: "#171717",
-    borderColor: "#2D2D2D",
-    borderRadius: 18,
-    borderWidth: 1,
-    gap: 10,
-    padding: 16,
+    gap: Spacing.sm,
   },
   noteCardTop: {
     alignItems: "center",
@@ -458,85 +300,53 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   noteAccent: {
-    borderRadius: 999,
-    height: 12,
-    width: 44,
+    backgroundColor: Palette.ink,
+    borderRadius: Radii.pill,
+    height: 6,
+    width: 36,
   },
   noteIndex: {
-    color: "#8A8A96",
     fontWeight: "700",
-  },
-  noteLabel: {
-    color: "#A1A1AA",
-    fontWeight: "700",
-    letterSpacing: 0.2,
-    textTransform: "uppercase",
   },
   noteValue: {
-    color: "#FFFFFF",
-    fontWeight: "600",
-    lineHeight: 22,
+    fontWeight: "700",
   },
   emptyState: {
     alignItems: "center",
-    backgroundColor: "#171717",
-    borderColor: "#2D2D2D",
-    borderRadius: 20,
-    borderWidth: 1,
-    gap: 8,
-    padding: 24,
+    gap: Spacing.sm,
   },
-  emptyStateIcon: {
+  emptyStateText: {
+    textAlign: "center",
+  },
+  modalBackdrop: {
     alignItems: "center",
-    backgroundColor: "#23244D",
-    borderRadius: 999,
-    height: 46,
+    backgroundColor: "rgba(0,0,0,0.4)",
+    flex: 1,
     justifyContent: "center",
-    marginBottom: 4,
-    width: 46,
+    padding: Spacing.xl,
   },
-  memoryModal: {
-    backgroundColor: "#1E1E1E",
-    borderColor: "#303038",
-    borderRadius: 24,
+  modalCard: {
+    backgroundColor: Palette.surface,
+    borderColor: Palette.line,
+    borderRadius: Radii.lg,
     borderWidth: 1,
-    gap: 18,
-    margin: 20,
-    padding: 20,
+    gap: Spacing.lg,
+    padding: Spacing.xl,
+    width: "100%",
   },
-  memoryModalHeader: {
+  modalHeader: {
     alignItems: "flex-start",
     flexDirection: "row",
-    gap: 12,
     justifyContent: "space-between",
   },
-  memoryModalTitleRow: {
-    alignItems: "center",
+  modalCopy: {
     flex: 1,
-    flexDirection: "row",
-    gap: 12,
+    gap: 2,
   },
-  memoryModalIcon: {
+  modalClose: {
     alignItems: "center",
-    backgroundColor: "#CDCFFC",
-    borderRadius: 14,
-    height: 40,
+    height: 32,
     justifyContent: "center",
-    width: 40,
-  },
-  memoryModalCopy: {
-    flex: 1,
-  },
-  memoryModalTitle: {
-    color: "#FFFFFF",
-    fontWeight: "700",
-  },
-  memoryModalSubtitle: {
-    color: "#8A8A96",
-    marginTop: 2,
-  },
-  memoryModalBody: {
-    color: "#E4E4E7",
-    lineHeight: 24,
+    width: 32,
   },
 });

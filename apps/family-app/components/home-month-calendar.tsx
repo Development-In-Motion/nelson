@@ -1,13 +1,15 @@
 import { useMemo, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Card, IconButton, Surface, Text } from 'react-native-paper';
 
+import { AppText, Body, Caption, Title } from '@/components/ui/text';
+import { Card } from '@/components/ui/card';
+import { Palette, Radii, Spacing } from '@/constants/theme';
 import type { CalendarActivity } from '@/types/ui-models';
 
 const weekdayLabels = ['П', 'В', 'С', 'Ч', 'П', 'С', 'Н'];
-const upcomingReminderColor = '#8B8DF1';
-const previousReminderColor = '#D29B2F';
+const upcomingReminderColor = Palette.ink;
+const previousReminderColor = Palette.inkFaint;
 
 function formatDateKey(value: Date) {
   const year = value.getFullYear();
@@ -139,170 +141,141 @@ export function HomeMonthCalendar({ reminders }: HomeMonthCalendarProps) {
   };
 
   return (
-    <Card mode="outlined" style={styles.calendarCard}>
-      <Card.Content style={styles.calendarContent}>
-        <View style={styles.calendarHeader}>
-          <View style={styles.calendarHeading}>
-            <Text variant="titleMedium" style={styles.calendarTitle}>
-              Календар с напомняния
-            </Text>
-            <Text variant="bodySmall" style={styles.calendarSubtitle}>
-              Разгледайте датите с напомняния, след това докоснете отбелязан ден за подробности.
-            </Text>
-          </View>
-          <View style={styles.monthSwitcher}>
-            <IconButton
-              icon={() => <Ionicons name="chevron-back" size={18} color="#FFFFFF" />}
-              size={18}
-              style={styles.monthButton}
-              onPress={() => handleChangeMonth(-1)}
-            />
-            <Text variant="titleSmall" style={styles.monthLabel}>
-              {formatMonthLabel(visibleMonth)}
-            </Text>
-            <IconButton
-              icon={() => <Ionicons name="chevron-forward" size={18} color="#FFFFFF" />}
-              size={18}
-              style={styles.monthButton}
-              onPress={() => handleChangeMonth(1)}
-            />
-          </View>
+    <Card style={styles.calendarCard}>
+      <View style={styles.calendarHeading}>
+        <Title>Календар с напомняния</Title>
+        <Caption>
+          Разгледайте датите с напомняния, след това докоснете отбелязан ден за подробности.
+        </Caption>
+      </View>
+
+      <View style={styles.monthSwitcher}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Предишен месец"
+          style={styles.monthButton}
+          onPress={() => handleChangeMonth(-1)}
+        >
+          <Ionicons name="chevron-back" size={18} color={Palette.ink} />
+        </Pressable>
+        <Body style={styles.monthLabel}>{formatMonthLabel(visibleMonth)}</Body>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Следващ месец"
+          style={styles.monthButton}
+          onPress={() => handleChangeMonth(1)}
+        >
+          <Ionicons name="chevron-forward" size={18} color={Palette.ink} />
+        </Pressable>
+      </View>
+
+      <View style={styles.legendRow}>
+        <View style={styles.legendItem}>
+          <View style={[styles.legendDot, { backgroundColor: upcomingReminderColor }]} />
+          <Caption>Предстоящи</Caption>
         </View>
-
-        <View style={styles.legendRow}>
-          <View style={styles.legendItem}>
-            <View style={[styles.legendDot, { backgroundColor: upcomingReminderColor }]} />
-            <Text variant="bodySmall" style={styles.legendText}>
-              Предстоящи
-            </Text>
-          </View>
-          <View style={styles.legendItem}>
-            <View style={[styles.legendDot, { backgroundColor: previousReminderColor }]} />
-            <Text variant="bodySmall" style={styles.legendText}>
-              Предишни
-            </Text>
-          </View>
+        <View style={styles.legendItem}>
+          <View style={[styles.legendDot, { backgroundColor: previousReminderColor }]} />
+          <Caption>Предишни</Caption>
         </View>
+      </View>
 
-        <View style={styles.weekdayRow}>
-          {weekdayLabels.map((label, index) => (
-            <Text key={`${label}-${index}`} variant="bodySmall" style={styles.weekdayLabel}>
-              {label}
-            </Text>
-          ))}
-        </View>
+      <View style={styles.weekdayRow}>
+        {weekdayLabels.map((label, index) => (
+          <Caption key={`${label}-${index}`} style={styles.weekdayLabel}>
+            {label}
+          </Caption>
+        ))}
+      </View>
 
-        <View style={styles.calendarGrid}>
-          {monthDays.map((day) => {
-            const dayKey = formatDateKey(day);
-            const dayReminders = remindersByDate[dayKey] ?? [];
-            const hasReminders = dayReminders.length > 0;
-            const isSelected = resolvedSelectedDate ? dayKey === resolvedSelectedDate : false;
-            const hasFutureReminders = dayReminders.some((item) => item.isFuture);
-            const hasPastReminders = dayReminders.some((item) => item.isPast);
-            const dayDotColor = hasFutureReminders
-              ? upcomingReminderColor
-              : hasPastReminders
-                ? previousReminderColor
-                : upcomingReminderColor;
+      <View style={styles.calendarGrid}>
+        {monthDays.map((day) => {
+          const dayKey = formatDateKey(day);
+          const dayReminders = remindersByDate[dayKey] ?? [];
+          const hasReminders = dayReminders.length > 0;
+          const isSelected = resolvedSelectedDate ? dayKey === resolvedSelectedDate : false;
+          const hasFutureReminders = dayReminders.some((item) => item.isFuture);
+          const dayDotColor = hasFutureReminders ? upcomingReminderColor : previousReminderColor;
 
-            return (
-              <Pressable
-                key={dayKey}
-                disabled={!hasReminders}
-                onPress={() => setSelectedDate(dayKey)}
+          return (
+            <Pressable
+              key={dayKey}
+              disabled={!hasReminders}
+              onPress={() => setSelectedDate(dayKey)}
+              style={[
+                styles.dayCell,
+                isSelected ? styles.dayCellSelected : null,
+                isTodayDate(day, today) ? styles.dayCellToday : null,
+                !isSameMonthDate(day, visibleMonth) ? styles.dayCellMuted : null,
+              ]}>
+              <AppText
+                variant="caption"
                 style={[
-                  styles.dayCell,
-                  isSelected ? styles.dayCellSelected : null,
-                  isTodayDate(day, today) ? styles.dayCellToday : null,
-                  !isSameMonthDate(day, visibleMonth) ? styles.dayCellMuted : null,
+                  styles.dayNumber,
+                  hasReminders ? styles.dayNumberActive : null,
+                  isSelected ? styles.dayNumberSelected : null,
                 ]}>
-                <Text
-                  variant="bodySmall"
-                  style={[
-                    styles.dayNumber,
-                    !isSameMonthDate(day, visibleMonth) ? styles.dayNumberMuted : null,
-                    hasReminders ? styles.dayNumberActive : null,
-                  ]}>
-                  {day.getDate()}
-                </Text>
-                <View style={styles.dotRow}>
-                  {hasReminders ? <View style={[styles.dayDot, { backgroundColor: dayDotColor }]} /> : null}
-                </View>
-              </Pressable>
-            );
-          })}
-        </View>
-
-        {selectedReminders.length > 0 ? (
-          <Surface style={styles.activityDrawer} elevation={0}>
-            <Text variant="titleSmall" style={styles.activityDrawerTitle}>
-              {resolvedSelectedDate ? formatSelectedDateLabel(resolvedSelectedDate) : ''}
-            </Text>
-            {selectedReminders.map((item) => (
-              <View key={item.id} style={styles.activityDrawerRow}>
-                <View
-                  style={[
-                    styles.activityDrawerDot,
-                    { backgroundColor: item.isFuture ? upcomingReminderColor : previousReminderColor },
-                  ]}
-                />
-                <View style={styles.activityDrawerCopy}>
-                  <Text variant="bodyMedium" style={styles.activityDrawerItemTitle}>
-                    {item.title}
-                  </Text>
-                  {item.description ? (
-                    <Text variant="bodySmall" style={styles.activityDrawerItemDescription}>
-                      {item.description}
-                    </Text>
-                  ) : null}
-                  <Text variant="bodySmall" style={styles.activityDrawerItemDetail}>
-                    {item.detail}
-                    {item.isFuture ? ' | предстоящо' : item.isPast ? ' | предишно' : ''}
-                  </Text>
-                </View>
+                {day.getDate()}
+              </AppText>
+              <View style={styles.dotRow}>
+                {hasReminders ? (
+                  <View
+                    style={[
+                      styles.dayDot,
+                      { backgroundColor: isSelected ? Palette.onInk : dayDotColor },
+                    ]}
+                  />
+                ) : null}
               </View>
-            ))}
-          </Surface>
-        ) : (
-          <Surface style={styles.emptyState} elevation={0}>
-            <Text variant="bodyMedium" style={styles.emptyStateTitle}>
-              Този месец все още няма напомняния
-            </Text>
-            <Text variant="bodySmall" style={styles.emptyStateText}>
-              Опитайте друг месец, за да видите по-стари или предстоящи напомняния.
-            </Text>
-          </Surface>
-        )}
-      </Card.Content>
+            </Pressable>
+          );
+        })}
+      </View>
+
+      {selectedReminders.length > 0 ? (
+        <Card inset style={styles.activityDrawer}>
+          <Body style={styles.activityDrawerTitle}>
+            {resolvedSelectedDate ? formatSelectedDateLabel(resolvedSelectedDate) : ''}
+          </Body>
+          {selectedReminders.map((item) => (
+            <View key={item.id} style={styles.activityDrawerRow}>
+              <View
+                style={[
+                  styles.activityDrawerDot,
+                  { backgroundColor: item.isFuture ? upcomingReminderColor : previousReminderColor },
+                ]}
+              />
+              <View style={styles.activityDrawerCopy}>
+                <Body style={styles.activityDrawerItemTitle}>{item.title}</Body>
+                {item.description ? (
+                  <Caption>{item.description}</Caption>
+                ) : null}
+                <Caption style={styles.activityDrawerItemDetail}>
+                  {item.detail}
+                  {item.isFuture ? ' · предстоящо' : item.isPast ? ' · предишно' : ''}
+                </Caption>
+              </View>
+            </View>
+          ))}
+        </Card>
+      ) : (
+        <Card inset>
+          <Body style={styles.emptyStateTitle}>Този месец все още няма напомняния</Body>
+          <Caption>
+            Опитайте друг месец, за да видите по-стари или предстоящи напомняния.
+          </Caption>
+        </Card>
+      )}
     </Card>
   );
 }
 
 const styles = StyleSheet.create({
   calendarCard: {
-    backgroundColor: '#1E1E1E',
-    borderColor: '#303038',
-    borderRadius: 20,
-    marginTop: 10,
-  },
-  calendarContent: {
-    gap: 14,
-  },
-  calendarHeader: {
-    gap: 12,
+    marginTop: Spacing.sm,
   },
   calendarHeading: {
-    gap: 4,
-  },
-  calendarTitle: {
-    color: '#FFFFFF',
-    fontWeight: '700',
-  },
-  calendarSubtitle: {
-    color: '#8A8A96',
-    lineHeight: 18,
-    maxWidth: 280,
+    gap: Spacing.xs,
   },
   monthSwitcher: {
     alignItems: 'center',
@@ -310,30 +283,32 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   monthButton: {
-    backgroundColor: '#171717',
-    margin: 0,
+    alignItems: 'center',
+    borderColor: Palette.line,
+    borderRadius: Radii.sm,
+    borderWidth: 1,
+    height: 36,
+    justifyContent: 'center',
+    width: 36,
   },
   monthLabel: {
-    color: '#FFFFFF',
     fontWeight: '700',
+    textTransform: 'capitalize',
   },
   legendRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 12,
+    gap: Spacing.lg,
   },
   legendItem: {
     alignItems: 'center',
     flexDirection: 'row',
-    gap: 6,
+    gap: Spacing.xs,
   },
   legendDot: {
     borderRadius: 99,
     height: 8,
     width: 8,
-  },
-  legendText: {
-    color: '#A1A1AA',
   },
   weekdayRow: {
     flexDirection: 'row',
@@ -341,7 +316,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
   },
   weekdayLabel: {
-    color: '#7C7C87',
     textAlign: 'center',
     width: `${100 / 7}%`,
   },
@@ -353,9 +327,8 @@ const styles = StyleSheet.create({
   },
   dayCell: {
     alignItems: 'center',
-    backgroundColor: '#171717',
-    borderColor: '#23232A',
-    borderRadius: 14,
+    borderColor: Palette.line,
+    borderRadius: Radii.sm,
     borderWidth: 1,
     minHeight: 52,
     paddingBottom: 8,
@@ -363,24 +336,24 @@ const styles = StyleSheet.create({
     width: '13%',
   },
   dayCellSelected: {
-    backgroundColor: '#23244D',
-    borderColor: '#8B8DF1',
+    backgroundColor: Palette.ink,
+    borderColor: Palette.ink,
   },
   dayCellToday: {
-    borderColor: '#4D4FA0',
+    borderColor: Palette.ink,
   },
   dayCellMuted: {
-    opacity: 0.4,
+    opacity: 0.35,
   },
   dayNumber: {
-    color: '#6B6B76',
-    fontWeight: '600',
+    color: Palette.inkFaint,
+    fontWeight: '700',
   },
   dayNumberActive: {
-    color: '#FFFFFF',
+    color: Palette.ink,
   },
-  dayNumberMuted: {
-    color: '#5B5B63',
+  dayNumberSelected: {
+    color: Palette.onInk,
   },
   dotRow: {
     alignItems: 'center',
@@ -397,58 +370,33 @@ const styles = StyleSheet.create({
     width: 6,
   },
   activityDrawer: {
-    backgroundColor: '#171717',
-    borderColor: '#2D2D2D',
-    borderRadius: 18,
-    borderWidth: 1,
-    gap: 12,
-    padding: 16,
+    gap: Spacing.md,
   },
   activityDrawerTitle: {
-    color: '#FFFFFF',
     fontWeight: '700',
   },
   activityDrawerRow: {
     alignItems: 'flex-start',
     flexDirection: 'row',
-    gap: 10,
+    gap: Spacing.md,
   },
   activityDrawerDot: {
     borderRadius: 99,
     height: 10,
-    marginTop: 5,
+    marginTop: 6,
     width: 10,
   },
   activityDrawerCopy: {
     flex: 1,
+    gap: 2,
   },
   activityDrawerItemTitle: {
-    color: '#FFFFFF',
-    lineHeight: 20,
-  },
-  activityDrawerItemDescription: {
-    color: '#CFCFD6',
-    lineHeight: 18,
-    marginTop: 4,
-  },
-  activityDrawerItemDetail: {
-    color: '#8A8A96',
-    marginTop: 3,
-  },
-  emptyState: {
-    backgroundColor: '#171717',
-    borderColor: '#2D2D2D',
-    borderRadius: 18,
-    borderWidth: 1,
-    padding: 16,
-  },
-  emptyStateTitle: {
-    color: '#FFFFFF',
     fontWeight: '700',
   },
-  emptyStateText: {
-    color: '#8A8A96',
-    lineHeight: 18,
-    marginTop: 4,
+  activityDrawerItemDetail: {
+    marginTop: 2,
+  },
+  emptyStateTitle: {
+    fontWeight: '700',
   },
 });

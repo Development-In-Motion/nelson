@@ -32,7 +32,13 @@ YOUR CAPABILITIES & TOOLS:
 - REMINDERS: If the caller asks you to remind them of something (e.g., taking medicine, feeding the dog, a doctor's appointment), immediately use the "create_reminder" tool. You must determine the appropriate startTime and endTime from the conversation context.
 - MEMORY: If they tell you a fact about themselves (e.g., "My doctor is Dr. Petrov" or "My knee hurts today"), acknowledge it warmly and use the "save_memory" tool to save it.
 - PROFILE: At the START of each conversation, use the "get_user_profile" tool to load the caller's saved memories and upcoming reminders. Use this context to personalize the conversation.
-- WEB SEARCH: If the caller asks a factual question you are unsure about (e.g., weather, news, general knowledge), use the "web_search" tool to find the answer. Summarize the result in 1-2 short sentences.
+- WEB SEARCH: If the caller asks a factual question you are unsure about (general knowledge), use the "web_search" tool to find the answer. Summarize the result in 1-2 short sentences.
+- WEATHER: For any weather question, use the "get_weather" tool. If they don't name a place, pass the town from their saved profile. Read the temperature and conditions aloud simply.
+- NEWS: When they ask what's happening or for the news, use the "get_news" tool and read 2-3 short headlines.
+- FAMILY: To pass a message to a relative, use "notify_family" with their saved contacts. Always confirm WHO and WHAT before sending, and tell them once it's done.
+- MEDICATIONS: When they mention a medicine they take, save it with "add_medication". Use "list_medications" to read their medicines back. You may also offer to set a reminder for the dose.
+- MANAGE REMINDERS: Use "list_reminders" to tell them what's coming up, and "cancel_reminder" to remove one (call list_reminders first to find the right id).
+- CORRECT OR FORGET: Use "update_memory" to change a saved detail, and "delete_memory" when they ask you to forget something.
 
 IMPORTANT RULES:
 - The caller is on a phone and CANNOT visit websites, check links, or look things up themselves. You must ALWAYS give a complete answer with all the details they need (times, dates, names, numbers). NEVER say "check the website" or "you can find it at...".
@@ -114,6 +120,125 @@ const TOOLS = [
         query: { type: "string", description: "The search query" },
       },
       required: ["query"],
+    },
+  },
+  {
+    type: "function" as const,
+    name: "get_weather",
+    description:
+      "Get the current weather and a short forecast for a place. Use this whenever the caller asks about the weather. If they don't name a place, pass their known city/town.",
+    parameters: {
+      type: "object",
+      properties: {
+        location: {
+          type: "string",
+          description: "City or town in Bulgaria (e.g. 'София', 'Пловдив'). Optional.",
+        },
+      },
+    },
+  },
+  {
+    type: "function" as const,
+    name: "get_news",
+    description:
+      "Get the top current news headlines (default: Bulgaria). Use when the caller asks what's happening / for the news.",
+    parameters: {
+      type: "object",
+      properties: {
+        topic: {
+          type: "string",
+          description: "Optional topic to focus on (e.g. 'спорт', 'времето', a town).",
+        },
+      },
+    },
+  },
+  {
+    type: "function" as const,
+    name: "notify_family",
+    description:
+      "Send a message to one of the caller's saved family contacts, by SMS or by an automated voice call. Use when the caller asks you to tell/call/message a relative (e.g. their son or daughter).",
+    parameters: {
+      type: "object",
+      properties: {
+        contactName: {
+          type: "string",
+          description: "Name or role of the contact to reach (e.g. 'Иван', 'син', 'дъщеря'). Optional if they only have one contact.",
+        },
+        message: { type: "string", description: "The message to deliver, in Bulgarian." },
+        method: {
+          type: "string",
+          enum: ["sms", "call"],
+          description: "How to reach them. Default 'sms'.",
+        },
+      },
+      required: ["message"],
+    },
+  },
+  {
+    type: "function" as const,
+    name: "add_medication",
+    description:
+      "Save a medication and its schedule to the caller's profile. Use when they mention a medicine they take.",
+    parameters: {
+      type: "object",
+      properties: {
+        name: { type: "string", description: "Medication name." },
+        schedule: { type: "string", description: "When/how often to take it (e.g. 'всяка сутрин', '2 пъти на ден')." },
+      },
+      required: ["name"],
+    },
+  },
+  {
+    type: "function" as const,
+    name: "list_medications",
+    description: "List the medications saved on the caller's profile.",
+    parameters: { type: "object", properties: {} },
+  },
+  {
+    type: "function" as const,
+    name: "list_reminders",
+    description:
+      "List the caller's upcoming reminders. Call this before cancelling a reminder so you know its id and title.",
+    parameters: { type: "object", properties: {} },
+  },
+  {
+    type: "function" as const,
+    name: "cancel_reminder",
+    description:
+      "Cancel/delete a reminder by its id. First use list_reminders to find the matching id from the caller's description.",
+    parameters: {
+      type: "object",
+      properties: {
+        reminderId: { type: "string", description: "The id of the reminder to cancel." },
+      },
+      required: ["reminderId"],
+    },
+  },
+  {
+    type: "function" as const,
+    name: "update_memory",
+    description:
+      "Update an existing saved fact about the caller (by its key) with a new value. Use when a previously saved detail has changed.",
+    parameters: {
+      type: "object",
+      properties: {
+        key: { type: "string", description: "The key of the memory to update (as used in save_memory)." },
+        value: { type: "string", description: "The new value." },
+      },
+      required: ["key", "value"],
+    },
+  },
+  {
+    type: "function" as const,
+    name: "delete_memory",
+    description:
+      "Delete a saved fact about the caller by its key. Use when the caller asks you to forget something.",
+    parameters: {
+      type: "object",
+      properties: {
+        key: { type: "string", description: "The key of the memory to delete." },
+      },
+      required: ["key"],
     },
   },
   {
@@ -278,6 +403,202 @@ async function registerUser(userId: string, name: string): Promise<string> {
   }
 }
 
+// Short Bulgarian descriptions for WMO weather codes returned by Open-Meteo.
+const WEATHER_CODES: Record<number, string> = {
+  0: "ясно",
+  1: "предимно ясно",
+  2: "разкъсана облачност",
+  3: "облачно",
+  45: "мъгла",
+  48: "мъгла",
+  51: "лек ръмеж",
+  53: "ръмеж",
+  55: "силен ръмеж",
+  56: "заледяващ ръмеж",
+  57: "заледяващ ръмеж",
+  61: "слаб дъжд",
+  63: "дъжд",
+  65: "силен дъжд",
+  66: "заледяващ дъжд",
+  67: "заледяващ дъжд",
+  71: "слаб сняг",
+  73: "сняг",
+  75: "силен сняг",
+  77: "снежни зърна",
+  80: "превалявания",
+  81: "превалявания",
+  82: "силни превалявания",
+  85: "снежни превалявания",
+  86: "снежни превалявания",
+  95: "гръмотевична буря",
+  96: "буря с градушка",
+  99: "буря с градушка",
+};
+
+async function getWeather(location?: string): Promise<string> {
+  const place = (location ?? "").trim() || "София";
+  try {
+    const geoRes = await fetch(
+      `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(place)}&count=1&language=bg&format=json`,
+    );
+    const geo = await geoRes.json();
+    const first = geo?.results?.[0];
+    if (!first) {
+      return JSON.stringify({ success: false, error: `Не намерих населено място "${place}".` });
+    }
+    const wRes = await fetch(
+      `https://api.open-meteo.com/v1/forecast?latitude=${first.latitude}&longitude=${first.longitude}&current=temperature_2m,weather_code&daily=temperature_2m_max,temperature_2m_min&timezone=auto&forecast_days=1`,
+    );
+    const w = await wRes.json();
+    const code = Number(w?.current?.weather_code);
+    return JSON.stringify({
+      success: true,
+      location: first.name,
+      temperatureC: Math.round(Number(w?.current?.temperature_2m)),
+      description: WEATHER_CODES[code] ?? "променливо",
+      highC: Math.round(Number(w?.daily?.temperature_2m_max?.[0])),
+      lowC: Math.round(Number(w?.daily?.temperature_2m_min?.[0])),
+    });
+  } catch (err) {
+    console.error("Weather lookup failed:", err);
+    return JSON.stringify({ success: false, error: "Не успях да взема прогнозата за времето." });
+  }
+}
+
+async function getNews(topic?: string): Promise<string> {
+  const focus = (topic ?? "").trim();
+  const query = focus
+    ? `Дай ми трите най-важни новини в България днес по темата "${focus}". Само кратки заглавия, без линкове.`
+    : `Дай ми трите най-важни новини в България днес. Само кратки заглавия, без линкове.`;
+  const answer = await searchWeb(query);
+  return JSON.stringify({ success: true, headlines: answer });
+}
+
+async function notifyFamily(
+  userId: string,
+  args: { contactName?: string; message: string; method?: string },
+): Promise<string> {
+  try {
+    const res = await fetch(`${USERDATA_API_URL}/notify`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        phone: userId,
+        contactName: args.contactName,
+        message: args.message,
+        method: args.method,
+      }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      return JSON.stringify({
+        success: false,
+        error: data?.error ?? "Не успях да изпратя съобщението.",
+        ...(data?.available ? { available: data.available } : {}),
+      });
+    }
+    return JSON.stringify({ success: true, ...data });
+  } catch (err) {
+    console.error("Notify family failed:", err);
+    return JSON.stringify({ success: false, error: "Не успях да се свържа с близкия." });
+  }
+}
+
+async function addMedication(
+  userId: string,
+  args: { name: string; schedule?: string },
+): Promise<string> {
+  try {
+    const res = await fetch(`${USERDATA_API_URL}/medications/${encodeURIComponent(userId)}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: args.name, schedule: args.schedule ?? "" }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      return JSON.stringify({ success: false, error: data?.error ?? "Не успях да запазя лекарството." });
+    }
+    return JSON.stringify({ success: true, medication: data?.medication });
+  } catch (err) {
+    console.error("Add medication failed:", err);
+    return JSON.stringify({ success: false, error: "Не успях да запазя лекарството." });
+  }
+}
+
+async function listMedications(userId: string): Promise<string> {
+  try {
+    const res = await fetch(`${USERDATA_API_URL}/medications/${encodeURIComponent(userId)}`);
+    if (!res.ok) return JSON.stringify({ success: false, error: "Не успях да заредя лекарствата." });
+    const medications = await res.json();
+    return JSON.stringify({ success: true, medications });
+  } catch (err) {
+    console.error("List medications failed:", err);
+    return JSON.stringify({ success: false, error: "Не успях да заредя лекарствата." });
+  }
+}
+
+async function listRemindersTool(userId: string): Promise<string> {
+  try {
+    const res = await fetch(`${REMINDERS_API_URL}/reminders?userId=${encodeURIComponent(userId)}`);
+    if (!res.ok) return JSON.stringify({ success: false, error: "Не успях да заредя напомнянията." });
+    const reminders = await res.json();
+    return JSON.stringify({ success: true, reminders });
+  } catch (err) {
+    console.error("List reminders failed:", err);
+    return JSON.stringify({ success: false, error: "Не успях да заредя напомнянията." });
+  }
+}
+
+async function cancelReminder(reminderId: string): Promise<string> {
+  try {
+    const res = await fetch(`${REMINDERS_API_URL}/reminders/${encodeURIComponent(reminderId)}`, {
+      method: "DELETE",
+    });
+    if (!res.ok) {
+      return JSON.stringify({ success: false, error: "Не успях да премахна напомнянето." });
+    }
+    return JSON.stringify({ success: true });
+  } catch (err) {
+    console.error("Cancel reminder failed:", err);
+    return JSON.stringify({ success: false, error: "Не успях да премахна напомнянето." });
+  }
+}
+
+async function updateMemory(userId: string, key: string, value: string): Promise<string> {
+  try {
+    const res = await fetch(`${MEMORY_API_URL}/memories/${encodeURIComponent(key)}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId, value }),
+    });
+    if (!res.ok) {
+      return JSON.stringify({ success: false, error: "Не намерих тази информация, за да я обновя." });
+    }
+    const memory = await res.json();
+    return JSON.stringify({ success: true, memory });
+  } catch (err) {
+    console.error("Update memory failed:", err);
+    return JSON.stringify({ success: false, error: "Не успях да обновя информацията." });
+  }
+}
+
+async function deleteMemory(userId: string, key: string): Promise<string> {
+  try {
+    const res = await fetch(
+      `${MEMORY_API_URL}/memories/${encodeURIComponent(key)}?userId=${encodeURIComponent(userId)}`,
+      { method: "DELETE" },
+    );
+    if (!res.ok) {
+      return JSON.stringify({ success: false, error: "Не успях да изтрия информацията." });
+    }
+    const data = await res.json();
+    return JSON.stringify({ success: true, deletedCount: data?.deletedCount ?? 0 });
+  } catch (err) {
+    console.error("Delete memory failed:", err);
+    return JSON.stringify({ success: false, error: "Не успях да изтрия информацията." });
+  }
+}
+
 /** Map 0–10 volume level to a gain multiplier: 0→0.0, 5→1.0, 10→2.0 */
 function volumeToGain(level: number): number {
   const clamped = Math.max(0, Math.min(10, level));
@@ -364,9 +685,12 @@ THIS IS A REMINDER CALL:
 
 YOUR CAPABILITIES & TOOLS:
 - PROFILE: Use "get_user_profile" to load the caller's name and personalize the greeting.
-- REMINDERS: If they ask for a new reminder during the call, use "create_reminder".
-- MEMORY: If they tell you a fact, use "save_memory".
-- WEB SEARCH: If they ask a factual question, use "web_search".
+- REMINDERS: If they ask for a new reminder during the call, use "create_reminder". Use "list_reminders" / "cancel_reminder" to read or remove existing ones.
+- MEMORY: If they tell you a fact, use "save_memory". Use "update_memory" / "delete_memory" to change or forget a saved detail.
+- WEATHER & NEWS: Use "get_weather" for the weather and "get_news" for the news.
+- FAMILY: Use "notify_family" to message or call one of their saved relatives (confirm who and what first).
+- MEDICATIONS: Use "add_medication" / "list_medications" for their medicines.
+- WEB SEARCH: If they ask a general factual question, use "web_search".
 
 VOLUME CONTROL:
 - You have a tool "adjust_volume" that controls how loud your voice is on a 0-10 scale (5 = normal, 0 = muted, 10 = maximum).
@@ -504,6 +828,24 @@ IMPORTANT: The caller is on a phone and CANNOT visit websites. Always give compl
               );
             } else if (data.name === "web_search") {
               searchWeb(args.query).then(handleToolResult);
+            } else if (data.name === "get_weather") {
+              getWeather(args.location).then(handleToolResult);
+            } else if (data.name === "get_news") {
+              getNews(args.topic).then(handleToolResult);
+            } else if (data.name === "notify_family") {
+              notifyFamily(callerPhone, args).then(handleToolResult);
+            } else if (data.name === "add_medication") {
+              addMedication(callerPhone, args).then(handleToolResult);
+            } else if (data.name === "list_medications") {
+              listMedications(callerPhone).then(handleToolResult);
+            } else if (data.name === "list_reminders") {
+              listRemindersTool(callerPhone).then(handleToolResult);
+            } else if (data.name === "cancel_reminder") {
+              cancelReminder(args.reminderId).then(handleToolResult);
+            } else if (data.name === "update_memory") {
+              updateMemory(callerPhone, args.key, args.value).then(handleToolResult);
+            } else if (data.name === "delete_memory") {
+              deleteMemory(callerPhone, args.key).then(handleToolResult);
             } else if (data.name === "create_reminder") {
               createReminder(callerPhone, args).then(handleToolResult);
             } else if (data.name === "save_memory") {
