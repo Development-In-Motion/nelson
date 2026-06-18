@@ -14,7 +14,7 @@ import { AuthProvider } from '@/context/auth-context';
 
 export default function RootLayout() {
   void Notifications;
-  const scheme = useColorScheme() ?? 'light';
+  const scheme = useColorScheme() === 'dark' ? 'dark' : 'light';
   const c = Schemes[scheme];
 
   const base = scheme === 'dark' ? NavigationDarkTheme : NavigationDefaultTheme;

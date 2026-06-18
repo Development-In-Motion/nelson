@@ -1,12 +1,14 @@
 import { useCallback, useEffect, useState } from "react";
-import { Modal, Pressable, StyleSheet, View } from "react-native";
+import { Platform, Pressable, StyleSheet, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import * as Haptics from "expo-haptics";
 
 import { ScreenShell } from "@/components/screen-shell";
 import { Body, Caption, Heading, Label, Muted, Title } from "@/components/ui/text";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Divider } from "@/components/ui/divider";
+import { Sheet } from "@/components/ui/sheet";
 import { Radii, Spacing, useColors } from "@/constants/theme";
 import { useAuth } from "@/context/auth-context";
 import { getCurrentUserMemory } from "@/lib/memory-api";
@@ -134,8 +136,15 @@ export default function MemoryScreen() {
               <View key={`${memoryRecord?._id ?? "memory"}-note-${index + 1}`}>
                 {index > 0 ? <Divider /> : null}
                 <Pressable
-                  onPress={() => setSelectedMemory(item)}
-                  style={({ pressed }) => [styles.noteRow, pressed ? { opacity: 0.6 } : null]}
+                  onPress={() => {
+                    if (Platform.OS !== "web") void Haptics.selectionAsync().catch(() => {});
+                    setSelectedMemory(item);
+                  }}
+                  android_ripple={{ color: c.accentSoft }}
+                  style={({ pressed }) => [
+                    styles.noteRow,
+                    pressed && Platform.OS === "ios" ? { opacity: 0.6 } : null,
+                  ]}
                 >
                   <View style={styles.noteText}>
                     <Label style={styles.noteLabel}>{note.label}</Label>
@@ -159,32 +168,13 @@ export default function MemoryScreen() {
         </Card>
       )}
 
-      <Modal
+      <Sheet
         visible={selectedMemory !== null}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setSelectedMemory(null)}
-      >
-        <Pressable style={styles.modalBackdrop} onPress={() => setSelectedMemory(null)}>
-          <Pressable style={[styles.modalCard, { backgroundColor: c.cardElevated }]} onPress={() => {}}>
-            <View style={styles.modalHeader}>
-              <View style={styles.modalCopy}>
-                <Title>Пълна бележка</Title>
-                <Caption>Запазена памет</Caption>
-              </View>
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="Затвори"
-                onPress={() => setSelectedMemory(null)}
-                style={[styles.modalClose, { backgroundColor: c.fill }]}
-              >
-                <Ionicons name="close" size={18} color={c.label} />
-              </Pressable>
-            </View>
-            <Body>{selectedMemory ?? ""}</Body>
-          </Pressable>
-        </Pressable>
-      </Modal>
+        onClose={() => setSelectedMemory(null)}
+        title="Пълна бележка"
+        caption="Запазена памет"
+        body={selectedMemory ?? ""}
+      />
     </ScreenShell>
   );
 }

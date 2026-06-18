@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Platform, Pressable, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
 
 import { AppText, Body, Caption, Title } from '@/components/ui/text';
 import { Card } from '@/components/ui/card';
@@ -191,7 +192,11 @@ export function HomeMonthCalendar({ reminders }: HomeMonthCalendarProps) {
             <Pressable
               key={dayKey}
               disabled={!hasReminders}
-              onPress={() => setSelectedDate(dayKey)}
+              onPress={() => {
+                if (Platform.OS !== 'web') void Haptics.selectionAsync().catch(() => {});
+                setSelectedDate(dayKey);
+              }}
+              android_ripple={{ color: c.accentSoft, radius: 28 }}
               style={[
                 styles.dayCell,
                 { backgroundColor: c.fill },
