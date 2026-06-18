@@ -4,12 +4,10 @@ import { Ionicons } from '@expo/vector-icons';
 
 import { AppText, Body, Caption, Title } from '@/components/ui/text';
 import { Card } from '@/components/ui/card';
-import { Palette, Radii, Spacing } from '@/constants/theme';
+import { Radii, Spacing, useColors } from '@/constants/theme';
 import type { CalendarActivity } from '@/types/ui-models';
 
 const weekdayLabels = ['П', 'В', 'С', 'Ч', 'П', 'С', 'Н'];
-const upcomingReminderColor = Palette.ink;
-const previousReminderColor = Palette.inkFaint;
 
 function formatDateKey(value: Date) {
   const year = value.getFullYear();
@@ -47,12 +45,10 @@ function endOfWeekMonday(value: Date) {
 function eachDayBetween(start: Date, end: Date) {
   const days: Date[] = [];
   const cursor = new Date(start);
-
   while (cursor.getTime() <= end.getTime()) {
     days.push(new Date(cursor));
     cursor.setDate(cursor.getDate() + 1);
   }
-
   return days;
 }
 
@@ -65,10 +61,7 @@ function isTodayDate(value: Date, today: Date) {
 }
 
 function formatMonthLabel(value: Date) {
-  return new Intl.DateTimeFormat('bg-BG', {
-    month: 'long',
-    year: 'numeric',
-  }).format(value);
+  return new Intl.DateTimeFormat('bg-BG', { month: 'long', year: 'numeric' }).format(value);
 }
 
 function formatSelectedDateLabel(dateKey: string) {
@@ -85,16 +78,17 @@ type HomeMonthCalendarProps = {
 };
 
 export function HomeMonthCalendar({ reminders }: HomeMonthCalendarProps) {
+  const c = useColors();
+  const upcomingReminderColor = c.accent;
+  const previousReminderColor = c.tertiaryLabel;
+
   const today = new Date();
   const [visibleMonth, setVisibleMonth] = useState(() => startOfMonthDate(today));
 
   const remindersByDate = useMemo(
     () =>
       reminders.reduce<Record<string, CalendarActivity[]>>((acc, item) => {
-        if (!acc[item.date]) {
-          acc[item.date] = [];
-        }
-
+        if (!acc[item.date]) acc[item.date] = [];
         acc[item.date].push(item);
         return acc;
       }, {}),
@@ -104,7 +98,6 @@ export function HomeMonthCalendar({ reminders }: HomeMonthCalendarProps) {
   const monthDays = useMemo(() => {
     const monthStart = startOfMonthDate(visibleMonth);
     const monthEnd = endOfMonthDate(visibleMonth);
-
     return eachDayBetween(startOfWeekMonday(monthStart), endOfWeekMonday(monthEnd));
   }, [visibleMonth]);
 
@@ -116,7 +109,6 @@ export function HomeMonthCalendar({ reminders }: HomeMonthCalendarProps) {
       })
       .map((item) => item.date)
       .sort()[0];
-
     return inMonth ?? null;
   }, [reminders, visibleMonth]);
 
@@ -144,28 +136,26 @@ export function HomeMonthCalendar({ reminders }: HomeMonthCalendarProps) {
     <Card style={styles.calendarCard}>
       <View style={styles.calendarHeading}>
         <Title>Календар с напомняния</Title>
-        <Caption>
-          Разгледайте датите с напомняния, след това докоснете отбелязан ден за подробности.
-        </Caption>
+        <Caption>Докоснете отбелязан ден за подробности.</Caption>
       </View>
 
       <View style={styles.monthSwitcher}>
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Предишен месец"
-          style={styles.monthButton}
+          style={[styles.monthButton, { backgroundColor: c.fill }]}
           onPress={() => handleChangeMonth(-1)}
         >
-          <Ionicons name="chevron-back" size={18} color={Palette.ink} />
+          <Ionicons name="chevron-back" size={18} color={c.label} />
         </Pressable>
         <Body style={styles.monthLabel}>{formatMonthLabel(visibleMonth)}</Body>
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Следващ месец"
-          style={styles.monthButton}
+          style={[styles.monthButton, { backgroundColor: c.fill }]}
           onPress={() => handleChangeMonth(1)}
         >
-          <Ionicons name="chevron-forward" size={18} color={Palette.ink} />
+          <Ionicons name="chevron-forward" size={18} color={c.label} />
         </Pressable>
       </View>
 
@@ -204,16 +194,17 @@ export function HomeMonthCalendar({ reminders }: HomeMonthCalendarProps) {
               onPress={() => setSelectedDate(dayKey)}
               style={[
                 styles.dayCell,
-                isSelected ? styles.dayCellSelected : null,
-                isTodayDate(day, today) ? styles.dayCellToday : null,
+                { backgroundColor: c.fill },
+                isSelected ? { backgroundColor: c.accent } : null,
+                isTodayDate(day, today) && !isSelected ? { borderColor: c.accent, borderWidth: 1 } : null,
                 !isSameMonthDate(day, visibleMonth) ? styles.dayCellMuted : null,
               ]}>
               <AppText
                 variant="caption"
                 style={[
-                  styles.dayNumber,
-                  hasReminders ? styles.dayNumberActive : null,
-                  isSelected ? styles.dayNumberSelected : null,
+                  { color: c.tertiaryLabel, fontWeight: '600' },
+                  hasReminders ? { color: c.label } : null,
+                  isSelected ? { color: c.onAccent } : null,
                 ]}>
                 {day.getDate()}
               </AppText>
@@ -222,7 +213,7 @@ export function HomeMonthCalendar({ reminders }: HomeMonthCalendarProps) {
                   <View
                     style={[
                       styles.dayDot,
-                      { backgroundColor: isSelected ? Palette.onInk : dayDotColor },
+                      { backgroundColor: isSelected ? c.onAccent : dayDotColor },
                     ]}
                   />
                 ) : null}
@@ -247,10 +238,8 @@ export function HomeMonthCalendar({ reminders }: HomeMonthCalendarProps) {
               />
               <View style={styles.activityDrawerCopy}>
                 <Body style={styles.activityDrawerItemTitle}>{item.title}</Body>
-                {item.description ? (
-                  <Caption>{item.description}</Caption>
-                ) : null}
-                <Caption style={styles.activityDrawerItemDetail}>
+                {item.description ? <Caption>{item.description}</Caption> : null}
+                <Caption>
                   {item.detail}
                   {item.isFuture ? ' · предстоящо' : item.isPast ? ' · предишно' : ''}
                 </Caption>
@@ -260,10 +249,8 @@ export function HomeMonthCalendar({ reminders }: HomeMonthCalendarProps) {
         </Card>
       ) : (
         <Card inset>
-          <Body style={styles.emptyStateTitle}>Този месец все още няма напомняния</Body>
-          <Caption>
-            Опитайте друг месец, за да видите по-стари или предстоящи напомняния.
-          </Caption>
+          <Body style={styles.activityDrawerTitle}>Този месец няма напомняния</Body>
+          <Caption>Опитайте друг месец за по-стари или предстоящи напомняния.</Caption>
         </Card>
       )}
     </Card>
@@ -284,15 +271,13 @@ const styles = StyleSheet.create({
   },
   monthButton: {
     alignItems: 'center',
-    borderColor: Palette.line,
     borderRadius: Radii.sm,
-    borderWidth: 1,
     height: 36,
     justifyContent: 'center',
     width: 36,
   },
   monthLabel: {
-    fontWeight: '700',
+    fontWeight: '600',
     textTransform: 'capitalize',
   },
   legendRow: {
@@ -327,33 +312,14 @@ const styles = StyleSheet.create({
   },
   dayCell: {
     alignItems: 'center',
-    borderColor: Palette.line,
     borderRadius: Radii.sm,
-    borderWidth: 1,
     minHeight: 52,
     paddingBottom: 8,
     paddingTop: 7,
     width: '13%',
   },
-  dayCellSelected: {
-    backgroundColor: Palette.ink,
-    borderColor: Palette.ink,
-  },
-  dayCellToday: {
-    borderColor: Palette.ink,
-  },
   dayCellMuted: {
     opacity: 0.35,
-  },
-  dayNumber: {
-    color: Palette.inkFaint,
-    fontWeight: '700',
-  },
-  dayNumberActive: {
-    color: Palette.ink,
-  },
-  dayNumberSelected: {
-    color: Palette.onInk,
   },
   dotRow: {
     alignItems: 'center',
@@ -373,7 +339,7 @@ const styles = StyleSheet.create({
     gap: Spacing.md,
   },
   activityDrawerTitle: {
-    fontWeight: '700',
+    fontWeight: '600',
   },
   activityDrawerRow: {
     alignItems: 'flex-start',
@@ -391,12 +357,6 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   activityDrawerItemTitle: {
-    fontWeight: '700',
-  },
-  activityDrawerItemDetail: {
-    marginTop: 2,
-  },
-  emptyStateTitle: {
-    fontWeight: '700',
+    fontWeight: '600',
   },
 });

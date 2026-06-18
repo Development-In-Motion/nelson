@@ -133,23 +133,23 @@ function getReminderTimelineInfo(reminder: ReminderRecord) {
 function formatRelativeLabel(value: string) {
   const time = new Date(value).getTime();
   if (Number.isNaN(time)) {
-    return 'Unknown';
+    return 'Неизвестно';
   }
 
   const diffMs = Date.now() - time;
   const diffMinutes = Math.max(1, Math.round(diffMs / 60000));
 
   if (diffMinutes < 60) {
-    return `${diffMinutes} minute${diffMinutes === 1 ? '' : 's'} ago`;
+    return `преди ${diffMinutes} ${diffMinutes === 1 ? 'минута' : 'минути'}`;
   }
 
   const diffHours = Math.round(diffMinutes / 60);
   if (diffHours < 24) {
-    return `${diffHours} hour${diffHours === 1 ? '' : 's'} ago`;
+    return `преди ${diffHours} ${diffHours === 1 ? 'час' : 'часа'}`;
   }
 
   const diffDays = Math.round(diffHours / 24);
-  return `${diffDays} day${diffDays === 1 ? '' : 's'} ago`;
+  return `преди ${diffDays} ${diffDays === 1 ? 'ден' : 'дни'}`;
 }
 
 function formatCalendarLabel(value: Date) {
@@ -167,19 +167,19 @@ function formatReminderDetail(value: Date) {
   const dateKey = formatDateKey(value);
 
   if (dateKey === formatDateKey(today)) {
-    return `Today at ${formatTimeLabel(value)}`;
+    return `Днес в ${formatTimeLabel(value)}`;
   }
 
   if (dateKey === formatDateKey(tomorrow)) {
-    return `Tomorrow at ${formatTimeLabel(value)}`;
+    return `Утре в ${formatTimeLabel(value)}`;
   }
 
-  return `${formatCalendarLabel(value)} at ${formatTimeLabel(value)}`;
+  return `${formatCalendarLabel(value)} в ${formatTimeLabel(value)}`;
 }
 
 function toInitials(name?: string) {
   if (!name) {
-    return 'FA';
+    return 'ЧС';
   }
 
   const parts = name
@@ -188,16 +188,16 @@ function toInitials(name?: string) {
     .filter(Boolean)
     .slice(0, 2);
 
-  return parts.map((part) => part[0]?.toUpperCase() ?? '').join('') || 'FA';
+  return parts.map((part) => part[0]?.toUpperCase() ?? '').join('') || 'ЧС';
 }
 
 export function buildElderProfile(memoryRecord: UserMemoryRecord | null, phone: string | null): LiveElderProfile {
   return {
     aiActive: true,
     initials: toInitials(memoryRecord?.name),
-    lastUpdatedLabel: memoryRecord?.updatedAt ? formatRelativeLabel(memoryRecord.updatedAt) : 'No updates yet',
-    name: memoryRecord?.name ?? 'Family member',
-    phone: memoryRecord?.phone ?? phone ?? 'No phone linked',
+    lastUpdatedLabel: memoryRecord?.updatedAt ? formatRelativeLabel(memoryRecord.updatedAt) : 'Все още няма обновления',
+    name: memoryRecord?.name ?? 'Член на семейството',
+    phone: memoryRecord?.phone ?? phone ?? 'Няма свързан телефон',
   };
 }
 
@@ -211,7 +211,7 @@ export function buildCalendarActivities(reminders: ReminderRecord[]): CalendarAc
         description: reminder.description?.trim() || undefined,
         id: reminder._id,
         date: isValid ? formatDateKey(endTime) : formatDateKey(new Date()),
-        detail: isValid ? formatTimeLabel(endTime) : 'Time unavailable',
+        detail: isValid ? formatTimeLabel(endTime) : 'Часът не е наличен',
         isFuture,
         isPast,
         title: reminder.title,
@@ -278,11 +278,11 @@ export function buildRecentActivity(reminders: ReminderRecord[]): HomeSummaryAct
       const parsedReminder = parseReminderDate(reminder);
       const endTime = parsedReminder.date;
       const fallbackDescription = parsedReminder.parseStrategy !== 'fallback'
-        ? `Scheduled for ${new Intl.DateTimeFormat('bg-BG', {
+        ? `Насрочено за ${new Intl.DateTimeFormat('bg-BG', {
             dateStyle: 'medium',
             timeStyle: 'short',
           }).format(endTime)}`
-        : 'Scheduled time unavailable';
+        : 'Часът не е наличен';
 
       return {
         description: reminder.description?.trim() || fallbackDescription,

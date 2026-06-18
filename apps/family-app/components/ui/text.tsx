@@ -1,17 +1,19 @@
 import { Text as RNText, type TextProps as RNTextProps } from 'react-native';
 
-import { Typography, type TypographyVariant } from '@/constants/theme';
+import { Typography, VariantTone, useColors, type TypographyVariant } from '@/constants/theme';
 
 export type AppTextProps = RNTextProps & {
   variant?: TypographyVariant;
 };
 
 /**
- * Single text primitive for the app. Every label/heading/body string renders
- * through this so the whole UI stays in one monospace voice.
+ * Single text primitive. Applies the iOS type scale plus the active palette
+ * colour for the variant, so each variant adapts to light/dark automatically.
  */
 export function AppText({ variant = 'body', style, ...rest }: AppTextProps) {
-  return <RNText {...rest} style={[Typography[variant], style]} />;
+  const c = useColors();
+  const color = c[VariantTone[variant]];
+  return <RNText {...rest} style={[Typography[variant], { color }, style]} />;
 }
 
 export const Heading = (props: AppTextProps) => <AppText variant="h1" {...props} />;

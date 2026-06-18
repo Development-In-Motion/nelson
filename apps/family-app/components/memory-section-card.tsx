@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Body, Caption, Title } from '@/components/ui/text';
 import { Card } from '@/components/ui/card';
 import { Divider } from '@/components/ui/divider';
-import { Palette, Radii, Spacing } from '@/constants/theme';
+import { Radii, Spacing, useColors } from '@/constants/theme';
 
 type MemoryRow = {
   id: string;
@@ -25,6 +25,7 @@ export function MemorySectionCard({
   rows,
   emptyMessage = 'Все още няма записи.',
 }: MemorySectionCardProps) {
+  const c = useColors();
   return (
     <Card style={styles.card}>
       <View style={styles.headerRow}>
@@ -35,7 +36,7 @@ export function MemorySectionCard({
           onPress={() => Alert.alert('Редактирането предстои')}
           style={styles.editButton}
         >
-          <Ionicons name="create-outline" size={20} color={Palette.ink} />
+          <Ionicons name="create-outline" size={20} color={c.accent} />
         </Pressable>
       </View>
 
@@ -43,10 +44,10 @@ export function MemorySectionCard({
 
       {rows.map((row, index) => (
         <View key={row.id}>
-          {index > 0 ? <Divider style={styles.divider} /> : null}
+          {index > 0 ? <Divider /> : null}
           <View style={styles.row}>
-            <View style={styles.iconBadge}>
-              <Ionicons name={iconName} size={16} color={Palette.onInk} />
+            <View style={[styles.iconBadge, { backgroundColor: c.fill }]}>
+              <Ionicons name={iconName} size={16} color={c.label} />
             </View>
             <View style={styles.rowText}>
               <Body style={styles.primary}>{row.label}</Body>
@@ -74,9 +75,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     width: 36,
   },
-  divider: {
-    marginVertical: Spacing.md,
-  },
   row: {
     alignItems: 'flex-start',
     flexDirection: 'row',
@@ -84,7 +82,6 @@ const styles = StyleSheet.create({
   },
   iconBadge: {
     alignItems: 'center',
-    backgroundColor: Palette.ink,
     borderRadius: Radii.sm,
     height: 36,
     justifyContent: 'center',
@@ -95,6 +92,6 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   primary: {
-    fontWeight: '700',
+    fontWeight: '600',
   },
 });

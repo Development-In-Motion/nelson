@@ -7,7 +7,7 @@ import {
   type ViewStyle,
 } from 'react-native';
 
-import { MinTapTarget, MonoFontFamily, Palette, Radii, Spacing } from '@/constants/theme';
+import { MinTapTarget, Radii, Spacing, SystemFontFamily, useColors } from '@/constants/theme';
 import { AppText } from '@/components/ui/text';
 
 type ButtonVariant = 'primary' | 'secondary' | 'ghost';
@@ -18,13 +18,14 @@ type ButtonProps = {
   variant?: ButtonVariant;
   loading?: boolean;
   disabled?: boolean;
+  destructive?: boolean;
   style?: StyleProp<ViewStyle>;
   accessibilityLabel?: string;
 };
 
 /**
- * Monochrome native button. Primary = solid black on white, secondary = hairline
- * outline, ghost = text only. No Material ripple/elevation — flat by design.
+ * iOS-style button. `primary` = filled graphite accent, `secondary` = neutral
+ * tinted fill, `ghost` = plain accent text. Flat — no Material elevation/ripple.
  */
 export function Button({
   label,
@@ -32,11 +33,28 @@ export function Button({
   variant = 'primary',
   loading = false,
   disabled = false,
+  destructive = false,
   style,
   accessibilityLabel,
 }: ButtonProps) {
+  const c = useColors();
   const isDisabled = disabled || loading;
   const isPrimary = variant === 'primary';
+
+  const containerColor =
+    variant === 'primary'
+      ? destructive
+        ? c.danger
+        : c.accent
+      : variant === 'secondary'
+        ? c.fill
+        : 'transparent';
+
+  const textColor = isPrimary
+    ? c.onAccent
+    : destructive
+      ? c.danger
+      : c.accent;
 
   return (
     <Pressable
@@ -47,9 +65,7 @@ export function Button({
       onPress={onPress}
       style={({ pressed }) => [
         styles.base,
-        variant === 'primary' && styles.primary,
-        variant === 'secondary' && styles.secondary,
-        variant === 'ghost' && styles.ghost,
+        { backgroundColor: containerColor },
         pressed && !isDisabled && styles.pressed,
         isDisabled && styles.disabled,
         style,
@@ -57,21 +73,9 @@ export function Button({
     >
       <View style={styles.inner}>
         {loading ? (
-          <ActivityIndicator
-            size="small"
-            color={isPrimary ? Palette.onInk : Palette.ink}
-            style={styles.spinner}
-          />
+          <ActivityIndicator size="small" color={textColor} style={styles.spinner} />
         ) : null}
-        <AppText
-          style={[
-            styles.label,
-            isPrimary ? styles.labelPrimary : styles.labelDark,
-            isDisabled && styles.labelDisabled,
-          ]}
-        >
-          {label}
-        </AppText>
+        <AppText style={[styles.label, { color: textColor }]}>{label}</AppText>
       </View>
     </Pressable>
   );
@@ -80,24 +84,13 @@ export function Button({
 const styles = StyleSheet.create({
   base: {
     alignItems: 'center',
-    borderRadius: Radii.md,
+    borderRadius: Radii.lg,
     justifyContent: 'center',
     minHeight: MinTapTarget,
     paddingHorizontal: Spacing.xl,
   },
-  primary: {
-    backgroundColor: Palette.ink,
-  },
-  secondary: {
-    backgroundColor: Palette.surface,
-    borderColor: Palette.ink,
-    borderWidth: 1,
-  },
-  ghost: {
-    backgroundColor: 'transparent',
-  },
   pressed: {
-    opacity: 0.7,
+    opacity: 0.6,
   },
   disabled: {
     opacity: 0.4,
@@ -112,18 +105,9 @@ const styles = StyleSheet.create({
     marginRight: Spacing.xs,
   },
   label: {
-    fontFamily: MonoFontFamily,
-    fontSize: 16,
-    fontWeight: '700',
-    letterSpacing: 0.2,
-  },
-  labelPrimary: {
-    color: Palette.onInk,
-  },
-  labelDark: {
-    color: Palette.ink,
-  },
-  labelDisabled: {
-    // opacity handled on container; keep colour stable
+    fontFamily: SystemFontFamily,
+    fontSize: 17,
+    fontWeight: '600',
+    letterSpacing: -0.43,
   },
 });

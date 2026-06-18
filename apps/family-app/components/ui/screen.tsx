@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { Palette, Spacing } from '@/constants/theme';
+import { Spacing, useColors } from '@/constants/theme';
 
 type ScreenProps = {
   children: ReactNode;
@@ -20,9 +20,7 @@ type ScreenProps = {
   scroll?: boolean;
 };
 
-/**
- * Standard white-canvas screen: safe area + scrollable, generously padded body.
- */
+/** Standard grouped-background screen: safe area + scrollable padded body. */
 export function Screen({
   children,
   contentContainerStyle,
@@ -30,8 +28,9 @@ export function Screen({
   onRefresh,
   scroll = true,
 }: ScreenProps) {
+  const c = useColors();
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top']}>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: c.bg }]} edges={['top']}>
       {scroll ? (
         <ScrollView
           contentContainerStyle={[styles.content, contentContainerStyle]}
@@ -41,8 +40,7 @@ export function Screen({
               <RefreshControl
                 refreshing={refreshing ?? false}
                 onRefresh={onRefresh}
-                tintColor={Palette.ink}
-                colors={[Palette.ink]}
+                tintColor={c.secondaryLabel}
               />
             ) : undefined
           }
@@ -58,17 +56,15 @@ export function Screen({
 
 const styles = StyleSheet.create({
   safeArea: {
-    backgroundColor: Palette.bg,
     flex: 1,
   },
   flex: {
     flex: 1,
   },
   content: {
-    backgroundColor: Palette.bg,
     flexGrow: 1,
     paddingBottom: Spacing.xxxl * 2,
-    paddingHorizontal: Spacing.xl,
-    paddingTop: Spacing.lg,
+    paddingHorizontal: Spacing.lg,
+    paddingTop: Spacing.sm,
   },
 });

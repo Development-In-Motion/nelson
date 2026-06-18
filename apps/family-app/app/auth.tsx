@@ -10,20 +10,14 @@ import {
 import { router } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import {
-  AppText,
-  Body,
-  Button,
-  Caption,
-  DotMatrixText,
-  Input,
-} from "@/components/ui";
-import { Palette, Spacing } from "@/constants/theme";
+import { AppLogo, Body, Button, Caption, Card, Input } from "@/components/ui";
+import { Spacing, useColors } from "@/constants/theme";
 import { useAuth } from "@/context/auth-context";
 import { formatBgPhone, isValidBgMobile, normalizeBgPhone } from "@/lib/phone";
 import { sendOtp, verifyOtp } from "@/lib/otp-api";
 
 export default function AuthScreen() {
+  const c = useColors();
   const [phone, setPhone] = useState<string>("");
   const [otpCode, setOtpCode] = useState<string>("");
   const [isOtpSent, setIsOtpSent] = useState(false);
@@ -100,23 +94,21 @@ export default function AuthScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: c.bg }]}>
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : undefined}
         style={styles.flex}
       >
         <View style={styles.content}>
           <View style={styles.hero}>
-            <DotMatrixText text="Nelson." dotSize={6} gap={3} />
-            <Body style={styles.tagline}>Едно телефонно обаждане.</Body>
-            <Body style={styles.tagline}>Целият ви живот — под контрол.</Body>
+            <AppLogo />
+            <Body style={[styles.tagline, { color: c.secondaryLabel }]}>
+              Едно обаждане. Целият ви живот — под контрол.
+            </Body>
           </View>
 
-          <View style={styles.card}>
-            <AppText variant="h2">
-              {isOtpSent ? "Потвърдете кода" : "Вход"}
-            </AppText>
-            <Body style={styles.cardText}>
+          <Card style={styles.card}>
+            <Body style={[styles.cardText, { color: c.secondaryLabel }]}>
               {isOtpSent
                 ? `Въведете 6-цифрения код, изпратен до ${formatBgPhone(phone)}.`
                 : "Въведете свързания телефонен номер, за да получите еднократен код."}
@@ -144,7 +136,7 @@ export default function AuthScreen() {
                   accessibilityLabel="Код за потвърждение"
                 />
                 <Pressable onPress={handleChangePhone} style={styles.changePhone}>
-                  <Caption style={styles.changePhoneText}>Смени телефона</Caption>
+                  <Caption style={{ color: c.accent }}>Смени телефона</Caption>
                 </Pressable>
               </View>
             )}
@@ -164,7 +156,7 @@ export default function AuthScreen() {
                 onPress={() => void handleRequestOtp()}
               />
             ) : null}
-          </View>
+          </Card>
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -173,7 +165,6 @@ export default function AuthScreen() {
 
 const styles = StyleSheet.create({
   safeArea: {
-    backgroundColor: Palette.bg,
     flex: 1,
   },
   flex: {
@@ -187,30 +178,20 @@ const styles = StyleSheet.create({
   },
   hero: {
     alignItems: "center",
-    gap: Spacing.sm,
+    gap: Spacing.lg,
   },
   tagline: {
-    color: Palette.inkMuted,
     textAlign: "center",
+    paddingHorizontal: Spacing.lg,
   },
   card: {
-    borderColor: Palette.line,
-    borderRadius: 14,
-    borderWidth: 1,
     gap: Spacing.lg,
-    padding: Spacing.xl,
   },
-  cardText: {
-    color: Palette.inkMuted,
-  },
+  cardText: {},
   fieldBlock: {
     gap: Spacing.md,
   },
   changePhone: {
     alignSelf: "flex-end",
-  },
-  changePhoneText: {
-    color: Palette.ink,
-    fontWeight: "700",
   },
 });

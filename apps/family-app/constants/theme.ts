@@ -1,45 +1,98 @@
 /**
- * Design system for the Nelson family app.
+ * Design system for the Nelson family app — native iOS look (Apple HIG).
  *
- * The visual language mirrors the product site callnelson.xyz: a pure-white
- * background, monochrome (near-black) ink, monospace typography and a minimal,
- * lots-of-whitespace layout. No color accents, no gradients, no heavy shadows —
- * structure is expressed with hairline borders and generous spacing.
+ * San-Francisco system font, grouped inset list surfaces, soft rounded corners,
+ * subtle depth, and a graphite/monochrome accent (near-black in light, white in
+ * dark). Colours are semantic and resolve per appearance via `useColors()`.
  */
 
 import { Platform, type TextStyle } from 'react-native';
 
-/** Monochrome brand palette sampled from callnelson.xyz. */
-export const Palette = {
-  /** App background — pure white. */
-  bg: '#FFFFFF',
-  /** Card / sheet surface (delineated by a hairline, not a fill). */
-  surface: '#FFFFFF',
-  /** Subtly raised surface for inputs / inset rows. */
-  surfaceAlt: '#FAFAFA',
-  /** Primary ink — headings, logo, icons, solid buttons. */
-  ink: '#111111',
-  /** Slightly softened ink for strong body text. */
-  inkSoft: '#333333',
-  /** Muted ink — secondary text, taglines. */
-  inkMuted: '#666666',
-  /** Faint ink — disabled / placeholder. */
-  inkFaint: '#9A9A9A',
-  /** Hairline borders / dividers. */
-  line: '#E5E5E5',
-  /** Strong border (focus, selected). */
-  lineStrong: '#111111',
-  /** Text/icon that sits on top of ink (e.g. on a black button). */
-  onInk: '#FFFFFF',
+import { useColorScheme } from '@/hooks/use-color-scheme';
 
-  // Desaturated semantic tones — used only where status must read at a glance.
-  success: '#1F7A3D',
-  successBg: '#EFF6F1',
-  warn: '#8A6A1F',
-  warnBg: '#FaF5EA',
-  danger: '#A12626',
-  dangerBg: '#F8EFEF',
-} as const;
+/** iOS semantic colour palette for one appearance. */
+export type ColorPalette = {
+  /** Grouped screen background. */
+  bg: string;
+  /** Card / grouped section surface. */
+  card: string;
+  /** Elevated surface (modals, nested tiles). */
+  cardElevated: string;
+  /** Filled control background (inputs, tiles, neutral chips). */
+  fill: string;
+  /** Primary text. */
+  label: string;
+  /** Secondary text. */
+  secondaryLabel: string;
+  /** Tertiary text (placeholders, hints). */
+  tertiaryLabel: string;
+  /** Hairline separators. */
+  separator: string;
+  /** Graphite accent (buttons, selected state). */
+  accent: string;
+  /** Text/icon on top of the accent. */
+  onAccent: string;
+  /** Tab bar background. */
+  tabBar: string;
+  /** Semantic tones + ~15% tinted backgrounds. */
+  success: string;
+  successFill: string;
+  warn: string;
+  warnFill: string;
+  danger: string;
+  dangerFill: string;
+};
+
+const light: ColorPalette = {
+  bg: '#F2F2F7',
+  card: '#FFFFFF',
+  cardElevated: '#FFFFFF',
+  fill: '#E9E9EB',
+  label: '#000000',
+  secondaryLabel: 'rgba(60,60,67,0.6)',
+  tertiaryLabel: 'rgba(60,60,67,0.3)',
+  separator: 'rgba(60,60,67,0.29)',
+  accent: '#1C1C1E',
+  onAccent: '#FFFFFF',
+  tabBar: 'rgba(249,249,249,0.94)',
+  success: '#34C759',
+  successFill: 'rgba(52,199,89,0.15)',
+  warn: '#FF9500',
+  warnFill: 'rgba(255,149,0,0.15)',
+  danger: '#FF3B30',
+  dangerFill: 'rgba(255,59,48,0.15)',
+};
+
+const dark: ColorPalette = {
+  bg: '#000000',
+  card: '#1C1C1E',
+  cardElevated: '#2C2C2E',
+  fill: '#2C2C2E',
+  label: '#FFFFFF',
+  secondaryLabel: 'rgba(235,235,245,0.6)',
+  tertiaryLabel: 'rgba(235,235,245,0.3)',
+  separator: 'rgba(84,84,88,0.6)',
+  accent: '#FFFFFF',
+  onAccent: '#000000',
+  tabBar: 'rgba(22,22,22,0.94)',
+  success: '#30D158',
+  successFill: 'rgba(48,209,88,0.18)',
+  warn: '#FF9F0A',
+  warnFill: 'rgba(255,159,10,0.18)',
+  danger: '#FF453A',
+  dangerFill: 'rgba(255,69,58,0.18)',
+};
+
+export const Schemes = { light, dark } as const;
+
+/** Light palette alias for any non-hook (module-scope) usage. */
+export const Palette = light;
+
+/** Resolve the active palette from the device appearance. */
+export function useColors(): ColorPalette {
+  const scheme = useColorScheme();
+  return scheme === 'dark' ? dark : light;
+}
 
 /** Spacing scale (multiples of 4). */
 export const Spacing = {
@@ -52,127 +105,94 @@ export const Spacing = {
   xxxl: 48,
 } as const;
 
-/** Corner radii — intentionally small/square to match the terminal aesthetic. */
+/** Corner radii — iOS continuous-ish. */
 export const Radii = {
-  sm: 6,
+  sm: 8,
   md: 10,
   lg: 14,
+  xl: 20,
   pill: 999,
 } as const;
 
-/** The monospace family per platform — the defining typographic trait. */
-export const MonoFontFamily = Platform.select({
-  ios: 'Menlo',
-  android: 'monospace',
-  default: 'monospace',
-  web: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace",
-}) as string;
+/** Minimum tap-target height — generous for elderly-adjacent users. */
+export const MinTapTarget = 50;
 
 /**
- * Named monospace text styles. Every piece of UI copy uses one of these so the
- * whole app reads in a single typewriter voice.
+ * The system font family per platform. On native, leaving `fontFamily`
+ * undefined uses the platform system font (San Francisco on iOS); on web we
+ * provide the standard `system-ui` stack.
+ */
+export const SystemFontFamily = Platform.select({
+  ios: undefined,
+  android: undefined,
+  default: undefined,
+  web: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
+}) as string | undefined;
+
+const fam = SystemFontFamily ? { fontFamily: SystemFontFamily } : {};
+
+/**
+ * Named text styles following the iOS type scale. These carry size/weight only;
+ * colour is applied by the `AppText` component from the active palette so the
+ * same variant adapts to light/dark.
  */
 export const Typography = {
-  /** Large hero/marketing text. */
-  display: {
-    fontFamily: MonoFontFamily,
-    fontSize: 34,
-    lineHeight: 40,
-    fontWeight: '700',
-    letterSpacing: -1,
-    color: Palette.ink,
-  },
-  /** Screen titles. */
-  h1: {
-    fontFamily: MonoFontFamily,
-    fontSize: 24,
-    lineHeight: 30,
-    fontWeight: '700',
-    letterSpacing: -0.5,
-    color: Palette.ink,
-  },
-  /** Section / card titles. */
-  h2: {
-    fontFamily: MonoFontFamily,
-    fontSize: 18,
-    lineHeight: 24,
-    fontWeight: '700',
-    letterSpacing: -0.2,
-    color: Palette.ink,
-  },
-  /** Default body copy. */
-  body: {
-    fontFamily: MonoFontFamily,
-    fontSize: 16,
-    lineHeight: 24,
-    fontWeight: '400',
-    color: Palette.inkSoft,
-  },
+  /** iOS Large Title. */
+  display: { ...fam, fontSize: 34, lineHeight: 41, fontWeight: '700', letterSpacing: 0.37 },
+  /** Title 1 — screen large titles. */
+  h1: { ...fam, fontSize: 28, lineHeight: 34, fontWeight: '700', letterSpacing: 0.36 },
+  /** Title 3 — section/card titles. */
+  h2: { ...fam, fontSize: 20, lineHeight: 25, fontWeight: '600', letterSpacing: 0.38 },
+  /** Headline — emphasised rows. */
+  headline: { ...fam, fontSize: 17, lineHeight: 22, fontWeight: '600', letterSpacing: -0.43 },
+  /** Body. */
+  body: { ...fam, fontSize: 17, lineHeight: 22, fontWeight: '400', letterSpacing: -0.43 },
   /** Emphasised body. */
-  bodyStrong: {
-    fontFamily: MonoFontFamily,
-    fontSize: 16,
-    lineHeight: 24,
-    fontWeight: '700',
-    color: Palette.ink,
-  },
-  /** Secondary / muted copy. */
-  muted: {
-    fontFamily: MonoFontFamily,
-    fontSize: 15,
-    lineHeight: 22,
-    fontWeight: '400',
-    color: Palette.inkMuted,
-  },
-  /** Small print. */
-  caption: {
-    fontFamily: MonoFontFamily,
-    fontSize: 13,
-    lineHeight: 18,
-    fontWeight: '400',
-    color: Palette.inkMuted,
-  },
-  /** Uppercase eyebrow labels. */
-  label: {
-    fontFamily: MonoFontFamily,
-    fontSize: 12,
-    lineHeight: 16,
-    fontWeight: '700',
-    letterSpacing: 1,
-    textTransform: 'uppercase',
-    color: Palette.inkMuted,
-  },
+  bodyStrong: { ...fam, fontSize: 17, lineHeight: 22, fontWeight: '600', letterSpacing: -0.43 },
+  /** Subhead — secondary copy. */
+  muted: { ...fam, fontSize: 15, lineHeight: 20, fontWeight: '400', letterSpacing: -0.24 },
+  /** Footnote — captions. */
+  caption: { ...fam, fontSize: 13, lineHeight: 18, fontWeight: '400', letterSpacing: -0.08 },
+  /** Footnote, uppercase — iOS grouped-list section headers. */
+  label: { ...fam, fontSize: 13, lineHeight: 18, fontWeight: '600', letterSpacing: 0.5, textTransform: 'uppercase' },
 } satisfies Record<string, TextStyle>;
 
 export type TypographyVariant = keyof typeof Typography;
 
-/** Minimum tap-target height — generous for elderly-adjacent users. */
-export const MinTapTarget = 52;
+/** Default text colour per variant: most are primary, a few are secondary. */
+export const VariantTone: Record<TypographyVariant, 'label' | 'secondaryLabel'> = {
+  display: 'label',
+  h1: 'label',
+  h2: 'label',
+  headline: 'label',
+  body: 'label',
+  bodyStrong: 'label',
+  muted: 'secondaryLabel',
+  caption: 'secondaryLabel',
+  label: 'secondaryLabel',
+};
 
 /**
- * Legacy navigation/theme colour map. Kept (recoloured to the light brand) so
- * the Expo-template helpers (`useThemeColor`, ThemedText/ThemedView) keep
- * compiling. New UI should consume `Palette`/`Typography` directly.
+ * Legacy navigation/theme colour map (kept for the Expo-template helpers
+ * `useThemeColor`, ThemedText/ThemedView so they keep compiling). New UI
+ * consumes `useColors()`/`Typography` directly.
  */
-const tintColorLight = Palette.ink;
-const tintColorDark = Palette.ink;
-
 export const Colors = {
   light: {
-    text: Palette.ink,
-    background: Palette.bg,
-    tint: tintColorLight,
-    icon: Palette.inkMuted,
-    tabIconDefault: Palette.inkMuted,
-    tabIconSelected: tintColorLight,
+    text: light.label,
+    background: light.bg,
+    tint: light.accent,
+    icon: light.secondaryLabel,
+    tabIconDefault: light.secondaryLabel,
+    tabIconSelected: light.accent,
   },
   dark: {
-    text: Palette.ink,
-    background: Palette.bg,
-    tint: tintColorDark,
-    icon: Palette.inkMuted,
-    tabIconDefault: Palette.inkMuted,
-    tabIconSelected: tintColorDark,
+    text: dark.label,
+    background: dark.bg,
+    tint: dark.accent,
+    icon: dark.secondaryLabel,
+    tabIconDefault: dark.secondaryLabel,
+    tabIconSelected: dark.accent,
   },
 };
 

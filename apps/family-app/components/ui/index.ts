@@ -4,5 +4,5 @@ export { Input } from '@/components/ui/input';
 export { Card } from '@/components/ui/card';
 export { Divider } from '@/components/ui/divider';
 export { Screen } from '@/components/ui/screen';
-export { DotMatrixText } from '@/components/ui/dot-matrix-text';
-export { ScrollCue } from '@/components/ui/scroll-cue';
+export { Avatar } from '@/components/ui/avatar';
+export { AppLogo } from '@/components/ui/app-logo';

@@ -8,7 +8,7 @@ import {
   type ViewStyle,
 } from 'react-native';
 
-import { MinTapTarget, MonoFontFamily, Palette, Radii, Spacing } from '@/constants/theme';
+import { MinTapTarget, Radii, Spacing, SystemFontFamily, useColors } from '@/constants/theme';
 import { Label } from '@/components/ui/text';
 
 type InputProps = TextInputProps & {
@@ -16,10 +16,9 @@ type InputProps = TextInputProps & {
   containerStyle?: StyleProp<ViewStyle>;
 };
 
-/**
- * Native monospace text field with a hairline outline that strengthens on focus.
- */
+/** iOS filled text field: tinted fill, rounded, focus ring via the accent. */
 export function Input({ label, containerStyle, style, onFocus, onBlur, ...rest }: InputProps) {
+  const c = useColors();
   const [focused, setFocused] = useState(false);
 
   return (
@@ -35,8 +34,16 @@ export function Input({ label, containerStyle, style, onFocus, onBlur, ...rest }
           setFocused(false);
           onBlur?.(event);
         }}
-        placeholderTextColor={Palette.inkFaint}
-        style={[styles.input, focused && styles.inputFocused, style]}
+        placeholderTextColor={c.tertiaryLabel}
+        style={[
+          styles.input,
+          {
+            backgroundColor: c.fill,
+            color: c.label,
+            borderColor: focused ? c.accent : 'transparent',
+          },
+          style,
+        ]}
       />
     </View>
   );
@@ -47,22 +54,15 @@ const styles = StyleSheet.create({
     gap: Spacing.sm,
   },
   label: {
-    color: Palette.inkMuted,
+    marginLeft: Spacing.xs,
   },
   input: {
-    backgroundColor: Palette.surfaceAlt,
-    borderColor: Palette.line,
     borderRadius: Radii.md,
-    borderWidth: 1,
-    color: Palette.ink,
-    fontFamily: MonoFontFamily,
+    borderWidth: 2,
+    fontFamily: SystemFontFamily,
     fontSize: 17,
     minHeight: MinTapTarget,
     paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.md,
-  },
-  inputFocused: {
-    borderColor: Palette.lineStrong,
-    borderWidth: 2,
   },
 });

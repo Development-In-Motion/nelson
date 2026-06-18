@@ -6,7 +6,8 @@ import { ScreenShell } from "@/components/screen-shell";
 import { Body, Caption, Heading, Label, Muted, Title } from "@/components/ui/text";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Palette, Radii, Spacing } from "@/constants/theme";
+import { Divider } from "@/components/ui/divider";
+import { Radii, Spacing, useColors } from "@/constants/theme";
 import { useAuth } from "@/context/auth-context";
 import { getCurrentUserMemory } from "@/lib/memory-api";
 import type { UserMemoryRecord } from "@/types/memory";
@@ -14,11 +15,9 @@ import type { UserMemoryRecord } from "@/types/memory";
 function splitMemoryNote(note: string) {
   const trimmed = note.trim();
   const separatorIndex = trimmed.indexOf(":");
-
   if (separatorIndex <= 0) {
     return { label: "Памет", value: trimmed };
   }
-
   return {
     label: trimmed.slice(0, separatorIndex).trim(),
     value: trimmed.slice(separatorIndex + 1).trim(),
@@ -26,6 +25,7 @@ function splitMemoryNote(note: string) {
 }
 
 export default function MemoryScreen() {
+  const c = useColors();
   const { user } = useAuth();
   const [memoryRecord, setMemoryRecord] = useState<UserMemoryRecord | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -45,23 +45,15 @@ export default function MemoryScreen() {
         return;
       }
 
-      if (mode !== "refresh") {
-        setIsLoading(true);
-      }
+      if (mode !== "refresh") setIsLoading(true);
 
       try {
         const record = await getCurrentUserMemory(user.phone);
-        if (options?.signal?.aborted) {
-          return;
-        }
-
+        if (options?.signal?.aborted) return;
         setMemoryRecord(record);
         setErrorMessage(null);
       } catch (error) {
-        if (options?.signal?.aborted) {
-          return;
-        }
-
+        if (options?.signal?.aborted) return;
         setMemoryRecord(null);
         setErrorMessage(
           error instanceof Error
@@ -81,7 +73,6 @@ export default function MemoryScreen() {
   useEffect(() => {
     const request = { aborted: false };
     void loadMemory("initial", { signal: request });
-
     return () => {
       request.aborted = true;
     };
@@ -92,30 +83,28 @@ export default function MemoryScreen() {
     void loadMemory("refresh");
   }, [loadMemory]);
 
-  const screenTitle = memoryRecord?.name
-    ? `Профил на ${memoryRecord.name}`
-    : "Профил на паметта";
+  const screenTitle = memoryRecord?.name ? `Памет на ${memoryRecord.name}` : "Памет";
   const memoryNotes = memoryRecord?.memories ?? [];
 
   return (
     <ScreenShell refreshing={isRefreshing} onRefresh={handleRefresh}>
-      <Heading>{screenTitle}</Heading>
+      <Heading style={styles.title}>{screenTitle}</Heading>
       <Muted style={styles.subtitle}>Какво знае AI за вашия близък.</Muted>
 
-      <View style={styles.statusBlock}>
-        <Label>Свързан телефон</Label>
+      <Label style={styles.sectionHeader}>Свързан телефон</Label>
+      <Card style={styles.section}>
         <Body>{user?.phone ?? "Няма наличен"}</Body>
-      </View>
+      </Card>
 
       {isLoading ? (
-        <Card style={styles.feedbackCard}>
+        <Card style={styles.section}>
           <Title>Зареждане на паметта</Title>
           <Caption>Извличане на бележките за памет.</Caption>
         </Card>
       ) : null}
 
       {!isLoading && errorMessage ? (
-        <Card style={styles.feedbackCard}>
+        <Card style={styles.section}>
           <Title>Паметта не можа да бъде заредена</Title>
           <Caption>{errorMessage}</Caption>
           <Button label="Опитай отново" variant="secondary" onPress={() => void loadMemory()} />
@@ -123,76 +112,52 @@ export default function MemoryScreen() {
       ) : null}
 
       {!isLoading && !errorMessage && !memoryRecord ? (
-        <Card style={styles.feedbackCard}>
+        <Card style={styles.section}>
           <Title>Все още няма открита памет</Title>
           <Caption>Все още не открихме запис за памет за този телефонен номер.</Caption>
         </Card>
       ) : null}
 
-      <Card style={styles.notesCard}>
-        <View style={styles.notesHeader}>
-          <View style={styles.notesHeaderCopy}>
-            <Title>Бележки за памет</Title>
-            <Caption>Запазени детайли, които Нелсън е запомнил за потребителя.</Caption>
-          </View>
-          <View style={styles.notesBadge}>
-            <Ionicons name="albums-outline" size={15} color={Palette.ink} />
-            <Caption style={styles.notesBadgeText}>{memoryNotes.length}</Caption>
-          </View>
+      <View style={styles.notesHeaderRow}>
+        <Label style={styles.sectionHeaderInline}>Бележки за памет</Label>
+        <View style={[styles.badge, { backgroundColor: c.fill }]}>
+          <Ionicons name="albums-outline" size={14} color={c.secondaryLabel} />
+          <Caption style={styles.badgeText}>{memoryNotes.length}</Caption>
         </View>
+      </View>
 
-        {memoryNotes.length > 0 ? (
-          <>
-            <View style={styles.summaryRow}>
-              <Card inset style={styles.summaryCard}>
-                <Label>Общо</Label>
-                <Heading>{memoryNotes.length}</Heading>
-              </Card>
-              <Pressable
-                onPress={() => setSelectedMemory(memoryNotes[0] ?? null)}
-                style={({ pressed }) => [
-                  styles.summaryCard,
-                  styles.summaryCardInteractive,
-                  pressed ? styles.summaryCardPressed : null,
-                ]}
-              >
-                <Label>Последна</Label>
-                <Body numberOfLines={2}>{memoryNotes[0]}</Body>
-                <Caption style={styles.summaryHint}>Докоснете, за да прочетете цялата бележка</Caption>
-              </Pressable>
-            </View>
-
-            <View style={styles.noteList}>
-              {memoryNotes.map((item, index) => {
-                const note = splitMemoryNote(item);
-
-                return (
-                  <Card
-                    inset
-                    key={`${memoryRecord?._id ?? "memory"}-note-${index + 1}`}
-                    style={styles.noteCard}
-                  >
-                    <View style={styles.noteCardTop}>
-                      <View style={styles.noteAccent} />
-                      <Caption style={styles.noteIndex}>Бележка {index + 1}</Caption>
-                    </View>
-                    <Label>{note.label}</Label>
-                    <Body style={styles.noteValue}>{note.value}</Body>
-                  </Card>
-                );
-              })}
-            </View>
-          </>
-        ) : (
-          <Card inset style={styles.emptyState}>
-            <Ionicons name="albums-outline" size={22} color={Palette.inkMuted} />
-            <Title>Все още няма запазени бележки за памет</Title>
-            <Caption style={styles.emptyStateText}>
-              Запазените бележки ще се появят тук, след като асистентът научи нещо смислено.
-            </Caption>
-          </Card>
-        )}
-      </Card>
+      {memoryNotes.length > 0 ? (
+        <Card style={styles.section}>
+          {memoryNotes.map((item, index) => {
+            const note = splitMemoryNote(item);
+            return (
+              <View key={`${memoryRecord?._id ?? "memory"}-note-${index + 1}`}>
+                {index > 0 ? <Divider /> : null}
+                <Pressable
+                  onPress={() => setSelectedMemory(item)}
+                  style={({ pressed }) => [styles.noteRow, pressed ? { opacity: 0.6 } : null]}
+                >
+                  <View style={styles.noteText}>
+                    <Label style={styles.noteLabel}>{note.label}</Label>
+                    <Body style={styles.noteValue} numberOfLines={2}>
+                      {note.value}
+                    </Body>
+                  </View>
+                  <Ionicons name="chevron-forward" size={18} color={c.tertiaryLabel} />
+                </Pressable>
+              </View>
+            );
+          })}
+        </Card>
+      ) : (
+        <Card style={[styles.section, styles.emptyState]}>
+          <Ionicons name="albums-outline" size={24} color={c.tertiaryLabel} />
+          <Title>Все още няма запазени бележки</Title>
+          <Caption style={styles.emptyStateText}>
+            Запазените бележки ще се появят тук, след като асистентът научи нещо смислено.
+          </Caption>
+        </Card>
+      )}
 
       <Modal
         visible={selectedMemory !== null}
@@ -201,7 +166,7 @@ export default function MemoryScreen() {
         onRequestClose={() => setSelectedMemory(null)}
       >
         <Pressable style={styles.modalBackdrop} onPress={() => setSelectedMemory(null)}>
-          <Pressable style={styles.modalCard} onPress={() => {}}>
+          <Pressable style={[styles.modalCard, { backgroundColor: c.cardElevated }]} onPress={() => {}}>
             <View style={styles.modalHeader}>
               <View style={styles.modalCopy}>
                 <Title>Пълна бележка</Title>
@@ -211,9 +176,9 @@ export default function MemoryScreen() {
                 accessibilityRole="button"
                 accessibilityLabel="Затвори"
                 onPress={() => setSelectedMemory(null)}
-                style={styles.modalClose}
+                style={[styles.modalClose, { backgroundColor: c.fill }]}
               >
-                <Ionicons name="close" size={20} color={Palette.ink} />
+                <Ionicons name="close" size={18} color={c.label} />
               </Pressable>
             </View>
             <Body>{selectedMemory ?? ""}</Body>
@@ -225,91 +190,56 @@ export default function MemoryScreen() {
 }
 
 const styles = StyleSheet.create({
-  subtitle: {
-    marginBottom: Spacing.xl,
+  title: {
     marginTop: Spacing.sm,
   },
-  statusBlock: {
-    gap: Spacing.xs,
+  subtitle: {
     marginBottom: Spacing.lg,
+    marginTop: Spacing.xs,
   },
-  feedbackCard: {
-    marginBottom: Spacing.lg,
+  section: {
+    marginBottom: Spacing.md,
   },
-  notesCard: {
-    marginBottom: Spacing.lg,
+  sectionHeader: {
+    marginBottom: Spacing.sm,
+    marginLeft: Spacing.md,
   },
-  notesHeader: {
-    alignItems: "flex-start",
-    flexDirection: "row",
-    gap: Spacing.md,
-    justifyContent: "space-between",
+  sectionHeaderInline: {
+    marginLeft: Spacing.md,
   },
-  notesHeaderCopy: {
-    flex: 1,
-    gap: Spacing.xs,
-  },
-  notesBadge: {
+  notesHeaderRow: {
     alignItems: "center",
-    borderColor: Palette.line,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: Spacing.sm,
+    marginTop: Spacing.sm,
+  },
+  badge: {
+    alignItems: "center",
     borderRadius: Radii.pill,
-    borderWidth: 1,
     flexDirection: "row",
     gap: Spacing.xs,
     paddingHorizontal: 10,
-    paddingVertical: 6,
+    paddingVertical: 4,
   },
-  notesBadgeText: {
-    color: Palette.ink,
-    fontWeight: "700",
+  badgeText: {
+    fontWeight: "600",
   },
-  summaryRow: {
-    flexDirection: "row",
-    gap: Spacing.md,
-  },
-  summaryCard: {
-    flex: 1,
-    gap: Spacing.sm,
-    minHeight: 96,
-  },
-  summaryCardInteractive: {
-    backgroundColor: Palette.surfaceAlt,
-    borderColor: Palette.line,
-    borderRadius: Radii.lg,
-    borderWidth: 1,
-    justifyContent: "space-between",
-    padding: Spacing.lg,
-  },
-  summaryCardPressed: {
-    opacity: 0.7,
-  },
-  summaryHint: {
-    color: Palette.ink,
-    fontWeight: "700",
-    marginTop: Spacing.xs,
-  },
-  noteList: {
-    gap: Spacing.md,
-  },
-  noteCard: {
-    gap: Spacing.sm,
-  },
-  noteCardTop: {
+  noteRow: {
     alignItems: "center",
     flexDirection: "row",
-    justifyContent: "space-between",
+    gap: Spacing.md,
+    paddingVertical: Spacing.xs,
   },
-  noteAccent: {
-    backgroundColor: Palette.ink,
-    borderRadius: Radii.pill,
-    height: 6,
-    width: 36,
+  noteText: {
+    flex: 1,
+    gap: 2,
   },
-  noteIndex: {
-    fontWeight: "700",
+  noteLabel: {
+    marginLeft: 0,
   },
   noteValue: {
-    fontWeight: "700",
+    fontWeight: "600",
   },
   emptyState: {
     alignItems: "center",
@@ -326,10 +256,7 @@ const styles = StyleSheet.create({
     padding: Spacing.xl,
   },
   modalCard: {
-    backgroundColor: Palette.surface,
-    borderColor: Palette.line,
-    borderRadius: Radii.lg,
-    borderWidth: 1,
+    borderRadius: Radii.xl,
     gap: Spacing.lg,
     padding: Spacing.xl,
     width: "100%",
@@ -345,8 +272,9 @@ const styles = StyleSheet.create({
   },
   modalClose: {
     alignItems: "center",
-    height: 32,
+    borderRadius: Radii.pill,
+    height: 30,
     justifyContent: "center",
-    width: 32,
+    width: 30,
   },
 });
