@@ -8,13 +8,12 @@ import { StatusBar } from 'expo-status-bar';
 import * as Notifications from 'expo-notifications';
 import 'react-native-reanimated';
 
-import { Schemes } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { Schemes, useResolvedScheme } from '@/constants/theme';
 import { AuthProvider } from '@/context/auth-context';
+import { ThemePreferenceProvider } from '@/context/theme-preference';
 
-export default function RootLayout() {
-  void Notifications;
-  const scheme = useColorScheme() === 'dark' ? 'dark' : 'light';
+function ThemedStack() {
+  const scheme = useResolvedScheme();
   const c = Schemes[scheme];
 
   const base = scheme === 'dark' ? NavigationDarkTheme : NavigationDefaultTheme;
@@ -31,15 +30,24 @@ export default function RootLayout() {
   };
 
   return (
-    <AuthProvider>
-      <ThemeProvider value={navigationTheme}>
-        <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: c.bg } }}>
-          <Stack.Screen name="index" />
-          <Stack.Screen name="auth" />
-          <Stack.Screen name="(tabs)" />
-        </Stack>
-        <StatusBar style="auto" />
-      </ThemeProvider>
-    </AuthProvider>
+    <ThemeProvider value={navigationTheme}>
+      <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: c.bg } }}>
+        <Stack.Screen name="index" />
+        <Stack.Screen name="auth" />
+        <Stack.Screen name="(tabs)" />
+      </Stack>
+      <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
+    </ThemeProvider>
+  );
+}
+
+export default function RootLayout() {
+  void Notifications;
+  return (
+    <ThemePreferenceProvider>
+      <AuthProvider>
+        <ThemedStack />
+      </AuthProvider>
+    </ThemePreferenceProvider>
   );
 }

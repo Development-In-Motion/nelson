@@ -9,6 +9,7 @@
 import { Platform, type TextStyle } from 'react-native';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { useThemePreference } from '@/context/theme-preference';
 
 /** iOS semantic colour palette for one appearance. */
 export type ColorPalette = {
@@ -92,10 +93,21 @@ export const Schemes = { light, dark } as const;
 /** Light palette alias for any non-hook (module-scope) usage. */
 export const Palette = light;
 
-/** Resolve the active palette from the device appearance. */
+/**
+ * Resolve the active appearance from the user's preference, falling back to the
+ * device setting when the preference is 'system'.
+ */
+export function useResolvedScheme(): 'light' | 'dark' {
+  const device = useColorScheme();
+  const { preference } = useThemePreference();
+  if (preference === 'light') return 'light';
+  if (preference === 'dark') return 'dark';
+  return device === 'dark' ? 'dark' : 'light';
+}
+
+/** Resolve the active palette from the user's preference + device appearance. */
 export function useColors(): ColorPalette {
-  const scheme = useColorScheme();
-  return scheme === 'dark' ? dark : light;
+  return Schemes[useResolvedScheme()];
 }
 
 /** Spacing scale (multiples of 4). */

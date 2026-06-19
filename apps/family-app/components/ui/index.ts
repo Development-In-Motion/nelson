@@ -8,3 +8,4 @@ export { Avatar } from '@/components/ui/avatar';
 export { AppLogo } from '@/components/ui/app-logo';
 export { IconChip } from '@/components/ui/icon-chip';
 export { Sheet, type SheetProps } from '@/components/ui/sheet';
+export { SegmentedControl, type SegmentedControlProps } from '@/components/ui/segmented-control';

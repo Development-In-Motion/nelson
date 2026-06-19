@@ -8,12 +8,17 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Divider } from "@/components/ui/divider";
 import { Avatar } from "@/components/ui/avatar";
+import { SegmentedControl } from "@/components/ui/segmented-control";
 import { StatusTag } from "@/components/status-tag";
 import { Spacing, useColors } from "@/constants/theme";
 import { useAuth } from "@/context/auth-context";
+import { useThemePreference, type ThemePreference } from "@/context/theme-preference";
 import { buildElderProfile } from "@/lib/dashboard-data";
 import { getCurrentUserMemory } from "@/lib/memory-api";
 import type { UserMemoryRecord } from "@/types/memory";
+
+const THEME_LABELS = ["Системна", "Светла", "Тъмна"];
+const THEME_VALUES: ThemePreference[] = ["system", "light", "dark"];
 
 const familyAccountProfile = {
   name: "Член на семейството",
@@ -23,6 +28,8 @@ const familyAccountProfile = {
 export default function ProfileScreen() {
   const c = useColors();
   const { signOut, user } = useAuth();
+  const { preference, setPreference } = useThemePreference();
+  const themeIndex = Math.max(0, THEME_VALUES.indexOf(preference));
   const [memoryRecord, setMemoryRecord] = useState<UserMemoryRecord | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -155,6 +162,15 @@ export default function ProfileScreen() {
             {familyAccountProfile.permissionLevel}
           </Body>
         </View>
+      </Card>
+
+      <Label style={styles.sectionHeader}>Изглед</Label>
+      <Card style={styles.section}>
+        <SegmentedControl
+          options={THEME_LABELS}
+          selectedIndex={themeIndex}
+          onChange={(i) => setPreference(THEME_VALUES[i])}
+        />
       </Card>
 
       <Button label="Изход" variant="secondary" destructive onPress={handleSignOut} />

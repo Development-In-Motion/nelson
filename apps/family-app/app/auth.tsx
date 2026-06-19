@@ -9,6 +9,7 @@ import {
 } from "react-native";
 import { router } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
+import * as Haptics from "expo-haptics";
 
 import { AppLogo, Body, Button, Caption, Card, Input } from "@/components/ui";
 import { Spacing, useColors } from "@/constants/theme";
@@ -89,6 +90,7 @@ export default function AuthScreen() {
   };
 
   const handleChangePhone = () => {
+    if (Platform.OS !== "web") void Haptics.selectionAsync().catch(() => {});
     setIsOtpSent(false);
     setOtpCode("");
   };

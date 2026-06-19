@@ -4,12 +4,11 @@ import { Platform, StyleSheet } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 
-import { SystemFontFamily, useColors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { SystemFontFamily, useColors, useResolvedScheme } from '@/constants/theme';
 
 export default function TabLayout() {
   const c = useColors();
-  const scheme = useColorScheme() ?? 'light';
+  const scheme = useResolvedScheme();
 
   return (
     <Tabs
